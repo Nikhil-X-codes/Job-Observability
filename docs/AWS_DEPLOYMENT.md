@@ -39,16 +39,20 @@ AWS pricing, Free Plan eligibility, available instance types, credits, duration,
 9. Backup DB and test restore; document retention and recovery point limitations.
 10. Set GitHub Actions deploy as **manual environment-approved step** (SSH/SSM or protected runner). Never hardcode AWS keys in repository.
 
-## Planned compose commands (once implementation exists)
+## Production Compose commands
+
+After AWS release approval, save the filled [production environment template](../infra/production.env.example) outside the checkout with restricted permissions. Set `JOBFLOW_PRODUCTION_ENV_FILE` to that path. On the release host, run:
 
 ```bash
-docker compose -f infra/compose.yaml up -d --build
-docker compose -f infra/compose.yaml ps
-docker compose -f infra/compose.yaml logs --tail=100 api worker dispatcher scheduler
-docker compose -f infra/compose.yaml down
+export JOBFLOW_RELEASE_TAG="$(git rev-parse HEAD)"
+compose=(docker compose --env-file "$JOBFLOW_PRODUCTION_ENV_FILE" -p jobflow-prod -f infra/compose.yaml -f infra/compose.prod.yaml)
+"${compose[@]}" config --quiet
+"${compose[@]}" up -d --build --wait --wait-timeout 180
+"${compose[@]}" ps
+"${compose[@]}" logs --tail=100 api worker dispatcher scheduler
 ```
 
-A successful `down` does not remove named volumes; understand `down -v` is destructive. Never use destructive volume cleanup against production by default.
+The versioned production overlay publishes only the Caddy ports 80 and 443. The default release omits optional observability services. Set a unique `GRAFANA_PASSWORD` if adding them, then inspect the rendered ports and keep the service on the private network. A rollback should preserve the database and broker volumes.
 
 ## Operational checks
 
@@ -60,6 +64,21 @@ A successful `down` does not remove named volumes; understand `down -v` is destr
 ## Rollback / disaster recovery
 
 If app release fails, keep last tagged image; deploy previous image while retaining compatible schema migrations. For destructive migrations use expand/contract approach. For host loss, recreate instance, restore DB backup and broker configuration, and reconcile outbox/job status. **Do not promise zero downtime or zero data loss from a single-host setup.**
+
+For the backup exercise, save a custom-format PostgreSQL dump and restore it into a disposable database. Run these commands on the approved release host with the production Compose arguments defined above:
+
+```bash
+umask 077
+backup="jobflow-$(date -u +%Y%m%dT%H%M%SZ).dump"
+"${compose[@]}" exec -T postgres sh -c 'pg_dump --format=custom --username="$POSTGRES_USER" "$POSTGRES_DB"' > "$backup"
+restore_db="jobflow_restore_$(date -u +%Y%m%d%H%M%S)"
+"${compose[@]}" exec -T postgres createdb -U jobflow "$restore_db"
+"${compose[@]}" exec -T postgres pg_restore --exit-on-error -U jobflow -d "$restore_db" < "$backup"
+"${compose[@]}" exec -T postgres psql -X -v ON_ERROR_STOP=1 -U jobflow -d "$restore_db" \
+  -c 'SELECT status, count(*) FROM jobs GROUP BY status ORDER BY status;'
+```
+
+Keep the dump in approved encrypted storage. Record the dump and restore timestamps, audit job counts and sample job history in the restored database, and remove the disposable database after verification. Keep production services pointed at the production database throughout the exercise.
 
 ## Cleanup steps
 

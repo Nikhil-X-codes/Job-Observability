@@ -2,7 +2,7 @@
 
 **JavaScript-only distributed job processor**
 
-JobFlow is a full-stack portfolio system for publishing, scheduling, processing, retrying, and observing asynchronous jobs. It demonstrates reliable job handling, multi-worker concurrency, measurable performance, and AWS deployment.
+JobFlow is a full-stack portfolio system for publishing, scheduling, processing, retrying, and observing asynchronous jobs. The repository includes native recovery tests, measured multi-worker performance, and an AWS EC2 deployment runbook.
 
 > **Evidence policy:** Never publish invented throughput, latency, reliability, or cost figures. Capture environment + reproducible measurements first; put verified numbers in your resume only after benchmarks pass.
 
@@ -43,7 +43,7 @@ Open `http://127.0.0.1:5173` for the dashboard. The API listens at `http://127.0
 
 Compose runs the Prisma migration before starting the API. To seed the demo, copy `.env.example` to `.env` if needed, set `SEED_ADMIN_PASSWORD` to a unique password of at least 16 characters, then run `npm ci`, `npm run db:generate`, and `npm run db:seed`. The default tenant is `demo` and the default email is `operator@example.test`. Rerunning the seed preserves the existing password and reuses the three sample jobs.
 
-The dashboard shows tenant jobs, attempt history, and administrator replay. [Dashboard screenshot](docs/assets/jobflow-overview.png) · [Recorded local walkthrough](docs/assets/jobflow-demo.webm)
+The dashboard shows tenant jobs, attempt history, and administrator replay. The 2:17 local walkthrough includes a forced worker exit, retry and recovery, dead-letter replay, and Grafana. [Dashboard screenshot](docs/assets/jobflow-overview.png) · [Recorded walkthrough](docs/assets/jobflow-demo.webm)
 
 ## Run the API locally
 
@@ -71,9 +71,13 @@ For native development, start PostgreSQL and RabbitMQ on loopback, configure `DA
 
 `npm run test:broker` and `npm run test:ui` require a freshly migrated disposable database and an isolated RabbitMQ vhost supplied through `TEST_DATABASE_URL` and `TEST_AMQP_URL`. For the browser test, install Playwright Chromium or set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to an installed Chromium browser.
 
+Set `JOBFLOW_DEMO_RECORDING` to a local `.webm` output path and run `npm run test:ui` to record the walkthrough. In this mode the test kills a paused fixture worker, verifies the replacement attempt and committed effect, and includes the checked-in Grafana capture.
+
 Enable local Prometheus and Grafana with the `observability` Compose profile. Open `http://127.0.0.1:3010` and sign in with the disposable local credentials in [Compose](infra/compose.yaml). The [metrics contract](docs/METRICS_AND_BENCHMARKS.md) lists the dashboard definitions. [Grafana verification screenshot](docs/assets/jobflow-grafana.png)
 
 The native monitoring smoke boots the API, dispatcher, worker, scheduler, Prometheus, and Grafana for a disposable database and broker. Run `npm run test:observability` with `TEST_DATABASE_URL`, `TEST_AMQP_URL`, `PROMETHEUS_EXECUTABLE_PATH`, and `GRAFANA_HOME`. Set `TEST_GRAFANA_DATABASE_URL` to use a separate disposable PostgreSQL database for Grafana metadata. To capture a screenshot, also set `JOBFLOW_GRAFANA_SCREENSHOT` and configure Playwright Chromium.
+
+The native worker-scaling benchmark completed all 5,410 accepted jobs across 12 measured runs at a fixed 15 submissions per second. Median in-window throughput ranged from 14.40 to 14.58 completed jobs per second across the four worker counts. The report includes per-run reconciliation, latency, resource use, and reproduction settings. [Benchmark report](benchmarks/results/2026-11-20-native-mixed/REPORT.md)
 
 ## Phase index
 
@@ -90,7 +94,7 @@ The native monitoring smoke boots the API, dispatcher, worker, scheduler, Promet
 | [08](docs/phases/PHASE_08_AWS_RELEASE.md) | Harden, deploy, runbook | Public HTTPS demo |
 | [09](docs/phases/PHASE_09_PORTFOLIO.md) | Documentation, demo, resume | Evidence-backed bullets |
 
-## Planned repository layout
+## Repository layout
 
 ```text
 jobflow/
@@ -105,10 +109,9 @@ jobflow/
     dispatcher/       # Transactional-outbox delivery
     scheduler/        # Due-job and expired-lease scans
   packages/
-    config/           # Shared runtime config validation
     db/               # Prisma schema, migrations, DB client
-    contracts/        # Shared JS schemas (e.g., Zod) and constants
-    telemetry/        # Counters, histograms, structured logger
+    queue/            # RabbitMQ transport, topology, and service startup
+    telemetry/        # Prometheus counters, gauges, and histograms
   infra/
     compose.yaml
     compose.prod.yaml
@@ -117,10 +120,14 @@ jobflow/
     caddy/
   scripts/
     seed.mjs
-    run-benchmark.sh
+    run-benchmark.mjs
+    verify-compose.mjs
   tests/
     integration/
+    broker/
     failure/
+    native/
+    ui/
   benchmarks/
     scenarios/
     results/           # Gitignore raw sensitive datasets, keep sanitized summaries

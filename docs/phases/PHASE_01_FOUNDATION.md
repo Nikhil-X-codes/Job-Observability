@@ -24,7 +24,7 @@ Read `AGENTS.md`, `docs/ARCHITECTURE.md`, `docs/DATA_AND_API_CONTRACTS.md`, and 
 
 - [ ] Fresh checkout boots all local services with one documented command.
 - [x] Liveness/readiness endpoints are meaningful and tested.
-- [ ] Broken DB/broker dependency makes readiness fail as designed.
+- [x] Broken DB/broker dependency makes readiness fail as designed. Verified with native services.
 - [ ] CI runs format, lint, unit tests, frontend build.
 - [x] Configuration examples and local Compose use disposable development values.
 

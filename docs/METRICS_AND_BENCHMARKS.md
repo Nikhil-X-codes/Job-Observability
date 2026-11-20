@@ -2,7 +2,7 @@
 
 ## Non-negotiable rule
 
-**No measured results exist yet.** Do not fabricate throughput, success rate, latency, cost, recovery time, or benchmark charts. Figures displayed during early UI work must be labeled **synthetic demo data**. Only later substitute collected measurements.
+Use the recorded workload, hardware, window, and denominators when citing measured performance. The fixed-rate native worker comparison is available with its per-run data. [Native benchmark report](../benchmarks/results/2026-11-20-native-mixed/REPORT.md)
 
 ## Metric definitions
 

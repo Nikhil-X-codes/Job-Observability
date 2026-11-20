@@ -1,6 +1,6 @@
 # Phase 09 — Portfolio packaging & interview prep
 
-**Status:** Local functional evidence and walkthrough materials are available. Publication and measured benchmark evidence remain open.
+**Status:** The local portfolio package has a verified 2:17 walkthrough, rendered Grafana screenshot, and measured performance report. Publication remains pending. [Walkthrough](../assets/jobflow-demo.webm) · [Benchmark report](../../benchmarks/results/2026-11-20-native-mixed/REPORT.md)
 
 ## Goal
 
@@ -23,10 +23,12 @@ Read `AGENTS.md`, `docs/ARCHITECTURE.md`, `docs/DATA_AND_API_CONTRACTS.md`, and 
 ## Exit criteria — must demonstrate
 
 - [ ] Public repo can be set up from scratch using documented commands.
-- [ ] Claims in resume are reproducible, not synthetic or guessed.
-- [ ] Architecture/failure tradeoffs clearly explained.
+- [x] Resume claims link to reproducible tests and measurements.
+- [x] Architecture and failure tradeoffs are documented.
 - [ ] Live demo (if present) is stable and cost-monitored.
-- [ ] Test evidence, screenshots, benchmarks and known limitations included.
+- [x] Test evidence, screenshots, benchmarks and known limitations are included.
+
+The recording shows a report job moving from submission to a worker claim. A local test fixture pauses the first worker before it commits. The script kills the process, starts the scheduler, verifies the retry and one committed effect, replays a separate dead-lettered job, and shows the captured Grafana dashboard. Open the recorded file directly to play it.
 
 ## Deliverables
 

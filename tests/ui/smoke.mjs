@@ -81,8 +81,8 @@ async function freePort() {
   return port;
 }
 
-function start(entry) {
-  const child = spawn(process.execPath, [entry], {
+function start(entry, ...args) {
+  const child = spawn(process.execPath, [entry, ...args], {
     env: {
       ...process.env,
       DATABASE_URL: TEST_DATABASE_URL,
@@ -186,7 +186,7 @@ try {
     "The dispatcher publishes the job to RabbitMQ with broker confirmation.",
   );
   if (recording) {
-    const stalled = start("tests/broker/stall-worker.mjs");
+    const stalled = start("tests/broker/stall-worker.mjs", "20000");
     await page.locator('[data-status="RUNNING"]').waitFor();
     await holdFrame(
       page,

@@ -1,0 +1,1939 @@
+{
+  "environment": {
+    "sha": "fd07243022952964c3d20055df66778754c9a8ef",
+    "k6Version": "k6.exe v2.4.0 (commit/dd9395906d, go1.26.11, windows/amd64)",
+    "nodeVersion": "v26.13.0",
+    "date": "2026-11-20T08:56:57.050Z",
+    "workers": [1, 2, 4, 8],
+    "workload": "mixed",
+    "rate": 15,
+    "repetitions": 3,
+    "runtime": "native",
+    "duration": "30s",
+    "rabbitmqVersion": "4.3.8",
+    "host": {
+      "os": "win32",
+      "release": "10.0.26300",
+      "arch": "x64",
+      "cpu": "11th Gen Intel(R) Core(TM) i3-1115G4 @ 3.00GHz",
+      "logicalCores": 4,
+      "memoryBytes": 8317952000
+    },
+    "postgresVersion": "17.12"
+  },
+  "aggregate": {
+    "measuredRuns": 12,
+    "accepted": 5410,
+    "completed": 5410,
+    "completedInWindow": 5185,
+    "completedAfterWindow": 225
+  },
+  "groups": [
+    {
+      "workerCount": 1,
+      "minimum": 12.2492772628379,
+      "median": 14.540001304035991,
+      "maximum": 14.597348311671347,
+      "speedupFromOneWorker": 1,
+      "submitP95Ms": 40.420549999999984,
+      "executionP95Ms": 363,
+      "endToEndP95Ms": 892,
+      "observedWorkerCpuCores": 0.12013378849005207,
+      "observedWorkerRssMiB": 169.5390625,
+      "observedNonterminalJobs": 50,
+      "observedOutboxLagSeconds": 3.145
+    },
+    {
+      "workerCount": 2,
+      "minimum": 10.945566228844017,
+      "median": 14.469192001300602,
+      "maximum": 14.537631604680726,
+      "speedupFromOneWorker": 0.9951300346365352,
+      "submitP95Ms": 39.81215,
+      "executionP95Ms": 363,
+      "endToEndP95Ms": 889,
+      "observedWorkerCpuCores": 0.16296551724137925,
+      "observedWorkerRssMiB": 285.6328125,
+      "observedNonterminalJobs": 128,
+      "observedOutboxLagSeconds": 8.12
+    },
+    {
+      "workerCount": 4,
+      "minimum": 14.560279557367503,
+      "median": 14.582991971161723,
+      "maximum": 14.687121782081057,
+      "speedupFromOneWorker": 1.0029567168686429,
+      "submitP95Ms": 39.94515,
+      "executionP95Ms": 363,
+      "endToEndP95Ms": 864,
+      "observedWorkerCpuCores": 0.18563793103448278,
+      "observedWorkerRssMiB": 581.4453125,
+      "observedNonterminalJobs": 12,
+      "observedOutboxLagSeconds": 0.534
+    },
+    {
+      "workerCount": 8,
+      "minimum": 13.459037711313393,
+      "median": 14.398825106953579,
+      "maximum": 14.523429613468364,
+      "speedupFromOneWorker": 0.9902904962571616,
+      "submitP95Ms": 42.585750000000004,
+      "executionP95Ms": 366,
+      "endToEndP95Ms": 1013,
+      "observedWorkerCpuCores": 0.23708620689655166,
+      "observedWorkerRssMiB": 901.28125,
+      "observedNonterminalJobs": 51,
+      "observedOutboxLagSeconds": 3.104
+    }
+  ],
+  "measurements": [
+    {
+      "workerCount": 1,
+      "repetition": 1,
+      "warmup": false,
+      "runId": "522ca2a2-fb56-41a1-9cc5-3f4914bf92ae",
+      "startedAt": "2026-11-20T08:57:17.348Z",
+      "endedAt": "2026-11-20T08:57:50.901Z",
+      "k6ExitCode": 0,
+      "reportedAccepted": 451,
+      "accepted": 451,
+      "completed": 451,
+      "dead": 0,
+      "cancelled": 0,
+      "remaining": 0,
+      "completedInWindow": 411,
+      "observedWindowSeconds": 33.553,
+      "completionsPerSecond": 12.2492772628379,
+      "retried": 0,
+      "failedAttempts": 0,
+      "totalFinishedAttempts": 451,
+      "terminalSuccessRate": 1,
+      "attemptFailureRate": 0,
+      "duplicateEffects": 0,
+      "missingCompletedEffects": 0,
+      "executionMs": {
+        "p50": 249,
+        "p95": 363,
+        "p99": 385
+      },
+      "endToEndMs": {
+        "p50": 1089,
+        "p95": 5661,
+        "p99": 6176
+      },
+      "submitMs": {
+        "med": 22.9844,
+        "p(95)": 51.8018,
+        "p(99)": 78.96015,
+        "max": 115.7179
+      },
+      "droppedIterations": 0,
+      "httpFailureRate": 0,
+      "observedWorkerCpuCores": 0.08731965,
+      "observedWorkerRssMiB": 169.5390625,
+      "observedNonterminalJobs": 50,
+      "observedOutboxLagSeconds": 3.145,
+      "prometheus": {
+        "workerCpu": [
+          {
+            "worker": 1,
+            "values": [
+              [1795165037.348, "0.02434113333333334"],
+              [1795165052.348, "0.0539358"],
+              [1795165067.348, "0.08731965"]
+            ]
+          }
+        ],
+        "workerRss": [
+          {
+            "worker": 1,
+            "values": [
+              [1795165037.348, "155820032"],
+              [1795165052.348, "158195712"],
+              [1795165067.348, "177774592"]
+            ]
+          }
+        ],
+        "nonterminalJobs": [
+          {
+            "status": "PENDING",
+            "values": [
+              [1795165037.348, "0"],
+              [1795165052.348, "5"],
+              [1795165067.348, "46"]
+            ]
+          },
+          {
+            "status": "QUEUED",
+            "values": [
+              [1795165037.348, "0"],
+              [1795165052.348, "4"],
+              [1795165067.348, "1"]
+            ]
+          },
+          {
+            "status": "RETRY_WAIT",
+            "values": [
+              [1795165037.348, "0"],
+              [1795165052.348, "0"],
+              [1795165067.348, "0"]
+            ]
+          },
+          {
+            "status": "RUNNING",
+            "values": [
+              [1795165037.348, "0"],
+              [1795165052.348, "4"],
+              [1795165067.348, "3"]
+            ]
+          }
+        ],
+        "outboxLagSeconds": [
+          [
+            [1795165037.348, "0"],
+            [1795165052.348, "0.609"],
+            [1795165067.348, "3.145"]
+          ]
+        ]
+      }
+    },
+    {
+      "workerCount": 1,
+      "repetition": 2,
+      "warmup": false,
+      "runId": "bf9cd576-5bc1-427f-9fa8-62257ba8a0ad",
+      "startedAt": "2026-11-20T08:58:13.361Z",
+      "endedAt": "2026-11-20T08:58:43.983Z",
+      "k6ExitCode": 0,
+      "reportedAccepted": 450,
+      "accepted": 450,
+      "completed": 450,
+      "dead": 0,
+      "cancelled": 0,
+      "remaining": 0,
+      "completedInWindow": 447,
+      "observedWindowSeconds": 30.622,
+      "completionsPerSecond": 14.597348311671347,
+      "retried": 0,
+      "failedAttempts": 0,
+      "totalFinishedAttempts": 450,
+      "terminalSuccessRate": 1,
+      "attemptFailureRate": 0,
+      "duplicateEffects": 0,
+      "missingCompletedEffects": 0,
+      "executionMs": {
+        "p50": 254,
+        "p95": 363,
+        "p99": 372
+      },
+      "endToEndMs": {
+        "p50": 662,
+        "p95": 868,
+        "p99": 964
+      },
+      "submitMs": {
+        "p(99)": 68.56046099999999,
+        "max": 79.3878,
+        "med": 18.5779,
+        "p(95)": 40.420549999999984
+      },
+      "droppedIterations": 0,
+      "httpFailureRate": 0,
+      "observedWorkerCpuCores": 0.1088219574849577,
+      "observedWorkerRssMiB": 145.55078125,
+      "observedNonterminalJobs": 26,
+      "observedOutboxLagSeconds": 1.41,
+      "prometheus": {
+        "workerCpu": [
+          {
+            "worker": 1,
+            "values": [
+              [1795165093.361, "0.10831034482758622"],
+              [1795165108.361, "0.1088219574849577"],
+              [1795165123.361, "0.10425862068965523"]
+            ]
+          }
+        ],
+        "workerRss": [
+          {
+            "worker": 1,
+            "values": [
+              [1795165093.361, "121905152"],
+              [1795165108.361, "152621056"],
+              [1795165123.361, "122052608"]
+            ]
+          }
+        ],
+        "nonterminalJobs": [
+          {
+            "status": "PENDING",
+            "values": [
+              [1795165093.361, "15"],
+              [1795165108.361, "5"],
+              [1795165123.361, "5"]
+            ]
+          },
+          {
+            "status": "QUEUED",
+            "values": [
+              [1795165093.361, "6"],
+              [1795165108.361, "5"],
+              [1795165123.361, "0"]
+            ]
+          },
+          {
+            "status": "RETRY_WAIT",
+            "values": [
+              [1795165093.361, "0"],
+              [1795165108.361, "0"],
+              [1795165123.361, "0"]
+            ]
+          },
+          {
+            "status": "RUNNING",
+            "values": [
+              [1795165093.361, "5"],
+              [1795165108.361, "1"],
+              [1795165123.361, "1"]
+            ]
+          }
+        ],
+        "outboxLagSeconds": [
+          [
+            [1795165093.361, "1.41"],
+            [1795165108.361, "0.611"],
+            [1795165123.361, "0.344"]
+          ]
+        ]
+      }
+    },
+    {
+      "workerCount": 1,
+      "repetition": 3,
+      "warmup": false,
+      "runId": "b5a261da-02e3-4d35-a3d7-f1f35180ec8b",
+      "startedAt": "2026-11-20T08:59:01.695Z",
+      "endedAt": "2026-11-20T08:59:32.369Z",
+      "k6ExitCode": 0,
+      "reportedAccepted": 451,
+      "accepted": 451,
+      "completed": 451,
+      "dead": 0,
+      "cancelled": 0,
+      "remaining": 0,
+      "completedInWindow": 446,
+      "observedWindowSeconds": 30.674,
+      "completionsPerSecond": 14.540001304035991,
+      "retried": 0,
+      "failedAttempts": 0,
+      "totalFinishedAttempts": 451,
+      "terminalSuccessRate": 1,
+      "attemptFailureRate": 0,
+      "duplicateEffects": 0,
+      "missingCompletedEffects": 0,
+      "executionMs": {
+        "p50": 253,
+        "p95": 363,
+        "p99": 395
+      },
+      "endToEndMs": {
+        "p50": 664,
+        "p95": 892,
+        "p99": 970
+      },
+      "submitMs": {
+        "med": 18.6453,
+        "p(95)": 38.633849999999995,
+        "p(99)": 69.0426,
+        "max": 103.8263
+      },
+      "droppedIterations": 0,
+      "httpFailureRate": 0,
+      "observedWorkerCpuCores": 0.12013378849005207,
+      "observedWorkerRssMiB": 146.9296875,
+      "observedNonterminalJobs": 9,
+      "observedOutboxLagSeconds": 0.507,
+      "prometheus": {
+        "workerCpu": [
+          {
+            "worker": 1,
+            "values": [
+              [1795165141.695, "0.11341379310344833"],
+              [1795165156.695, "0.11584482758620691"],
+              [1795165171.695, "0.12013378849005207"]
+            ]
+          }
+        ],
+        "workerRss": [
+          {
+            "worker": 1,
+            "values": [
+              [1795165141.695, "153325568"],
+              [1795165156.695, "151937024"],
+              [1795165171.695, "154066944"]
+            ]
+          }
+        ],
+        "nonterminalJobs": [
+          {
+            "status": "PENDING",
+            "values": [
+              [1795165141.695, "0"],
+              [1795165156.695, "1"],
+              [1795165171.695, "4"]
+            ]
+          },
+          {
+            "status": "QUEUED",
+            "values": [
+              [1795165141.695, "0"],
+              [1795165156.695, "6"],
+              [1795165171.695, "2"]
+            ]
+          },
+          {
+            "status": "RETRY_WAIT",
+            "values": [
+              [1795165141.695, "0"],
+              [1795165156.695, "0"],
+              [1795165171.695, "0"]
+            ]
+          },
+          {
+            "status": "RUNNING",
+            "values": [
+              [1795165141.695, "0"],
+              [1795165156.695, "1"],
+              [1795165171.695, "3"]
+            ]
+          }
+        ],
+        "outboxLagSeconds": [
+          [
+            [1795165141.695, "0"],
+            [1795165156.695, "0.507"],
+            [1795165171.695, "0.411"]
+          ]
+        ]
+      }
+    },
+    {
+      "workerCount": 2,
+      "repetition": 1,
+      "warmup": false,
+      "runId": "1ddc0e69-95d5-45bc-a435-eb403ab66486",
+      "startedAt": "2026-11-20T08:59:52.335Z",
+      "endedAt": "2026-11-20T09:00:23.090Z",
+      "k6ExitCode": 0,
+      "reportedAccepted": 451,
+      "accepted": 451,
+      "completed": 451,
+      "dead": 0,
+      "cancelled": 0,
+      "remaining": 0,
+      "completedInWindow": 445,
+      "observedWindowSeconds": 30.755,
+      "completionsPerSecond": 14.469192001300602,
+      "retried": 0,
+      "failedAttempts": 0,
+      "totalFinishedAttempts": 451,
+      "terminalSuccessRate": 1,
+      "attemptFailureRate": 0,
+      "duplicateEffects": 0,
+      "missingCompletedEffects": 0,
+      "executionMs": {
+        "p50": 255,
+        "p95": 363,
+        "p99": 378
+      },
+      "endToEndMs": {
+        "p50": 664,
+        "p95": 889,
+        "p99": 975
+      },
+      "submitMs": {
+        "med": 16.3053,
+        "p(95)": 38.7984,
+        "p(99)": 56.6441,
+        "max": 88.4123
+      },
+      "droppedIterations": 0,
+      "httpFailureRate": 0,
+      "observedWorkerCpuCores": 0.128236015530303,
+      "observedWorkerRssMiB": 267.7421875,
+      "observedNonterminalJobs": 12,
+      "observedOutboxLagSeconds": 0.501,
+      "prometheus": {
+        "workerCpu": [
+          {
+            "worker": 1,
+            "values": [
+              [1795165192.335, "0.024153616666666666"],
+              [1795165207.335, "0.043886200595238095"],
+              [1795165222.335, "0.06428094280303027"]
+            ]
+          },
+          {
+            "worker": 2,
+            "values": [
+              [1795165192.335, "0.024677549999999993"],
+              [1795165207.335, "0.04167993999999999"],
+              [1795165222.335, "0.06395507272727273"]
+            ]
+          }
+        ],
+        "workerRss": [
+          {
+            "worker": 1,
+            "values": [
+              [1795165192.335, "128110592"],
+              [1795165207.335, "138838016"],
+              [1795165222.335, "106303488"]
+            ]
+          },
+          {
+            "worker": 2,
+            "values": [
+              [1795165192.335, "127549440"],
+              [1795165207.335, "141910016"],
+              [1795165222.335, "106131456"]
+            ]
+          }
+        ],
+        "nonterminalJobs": [
+          {
+            "status": "PENDING",
+            "values": [
+              [1795165192.335, "0"],
+              [1795165207.335, "5"],
+              [1795165222.335, "8"]
+            ]
+          },
+          {
+            "status": "QUEUED",
+            "values": [
+              [1795165192.335, "0"],
+              [1795165207.335, "0"],
+              [1795165222.335, "0"]
+            ]
+          },
+          {
+            "status": "RETRY_WAIT",
+            "values": [
+              [1795165192.335, "0"],
+              [1795165207.335, "0"],
+              [1795165222.335, "0"]
+            ]
+          },
+          {
+            "status": "RUNNING",
+            "values": [
+              [1795165192.335, "0"],
+              [1795165207.335, "4"],
+              [1795165222.335, "4"]
+            ]
+          }
+        ],
+        "outboxLagSeconds": [
+          [
+            [1795165192.335, "0"],
+            [1795165207.335, "0.302"],
+            [1795165222.335, "0.501"]
+          ]
+        ]
+      }
+    },
+    {
+      "workerCount": 2,
+      "repetition": 2,
+      "warmup": false,
+      "runId": "908d1430-6e41-4bc8-9961-26ec187b12fe",
+      "startedAt": "2026-11-20T09:00:40.962Z",
+      "endedAt": "2026-11-20T09:01:11.568Z",
+      "k6ExitCode": 0,
+      "reportedAccepted": 451,
+      "accepted": 451,
+      "completed": 451,
+      "dead": 0,
+      "cancelled": 0,
+      "remaining": 0,
+      "completedInWindow": 335,
+      "observedWindowSeconds": 30.606,
+      "completionsPerSecond": 10.945566228844017,
+      "retried": 0,
+      "failedAttempts": 0,
+      "totalFinishedAttempts": 451,
+      "terminalSuccessRate": 1,
+      "attemptFailureRate": 0,
+      "duplicateEffects": 0,
+      "missingCompletedEffects": 0,
+      "executionMs": {
+        "p50": 258,
+        "p95": 404,
+        "p99": 418
+      },
+      "endToEndMs": {
+        "p50": 7242,
+        "p95": 9334,
+        "p99": 9514
+      },
+      "submitMs": {
+        "med": 27.462,
+        "p(95)": 83.94364999999999,
+        "p(99)": 165.5818,
+        "max": 362.9059
+      },
+      "droppedIterations": 0,
+      "httpFailureRate": 0,
+      "observedWorkerCpuCores": 0.16296551724137925,
+      "observedWorkerRssMiB": 284.96484375,
+      "observedNonterminalJobs": 128,
+      "observedOutboxLagSeconds": 8.12,
+      "prometheus": {
+        "workerCpu": [
+          {
+            "worker": 1,
+            "values": [
+              [1795165240.962, "0.08537931034482756"],
+              [1795165255.962, "0.07705172413793099"],
+              [1795165270.962, "0.0719310344827586"]
+            ]
+          },
+          {
+            "worker": 2,
+            "values": [
+              [1795165240.962, "0.07758620689655171"],
+              [1795165255.962, "0.07622413793103447"],
+              [1795165270.962, "0.0711206896551724"]
+            ]
+          }
+        ],
+        "workerRss": [
+          {
+            "worker": 1,
+            "values": [
+              [1795165240.962, "124325888"],
+              [1795165255.962, "148672512"],
+              [1795165270.962, "148807680"]
+            ]
+          },
+          {
+            "worker": 2,
+            "values": [
+              [1795165240.962, "125202432"],
+              [1795165255.962, "149909504"],
+              [1795165270.962, "149999616"]
+            ]
+          }
+        ],
+        "nonterminalJobs": [
+          {
+            "status": "PENDING",
+            "values": [
+              [1795165240.962, "3"],
+              [1795165255.962, "67"],
+              [1795165270.962, "121"]
+            ]
+          },
+          {
+            "status": "QUEUED",
+            "values": [
+              [1795165240.962, "0"],
+              [1795165255.962, "1"],
+              [1795165270.962, "2"]
+            ]
+          },
+          {
+            "status": "RETRY_WAIT",
+            "values": [
+              [1795165240.962, "0"],
+              [1795165255.962, "0"],
+              [1795165270.962, "0"]
+            ]
+          },
+          {
+            "status": "RUNNING",
+            "values": [
+              [1795165240.962, "4"],
+              [1795165255.962, "1"],
+              [1795165270.962, "5"]
+            ]
+          }
+        ],
+        "outboxLagSeconds": [
+          [
+            [1795165240.962, "0.344"],
+            [1795165255.962, "4.454"],
+            [1795165270.962, "8.12"]
+          ]
+        ]
+      }
+    },
+    {
+      "workerCount": 2,
+      "repetition": 3,
+      "warmup": false,
+      "runId": "24985edd-15d9-4081-bb29-dd32cff4717e",
+      "startedAt": "2026-11-20T09:01:35.419Z",
+      "endedAt": "2026-11-20T09:02:06.098Z",
+      "k6ExitCode": 0,
+      "reportedAccepted": 451,
+      "accepted": 451,
+      "completed": 451,
+      "dead": 0,
+      "cancelled": 0,
+      "remaining": 0,
+      "completedInWindow": 446,
+      "observedWindowSeconds": 30.679,
+      "completionsPerSecond": 14.537631604680726,
+      "retried": 0,
+      "failedAttempts": 0,
+      "totalFinishedAttempts": 451,
+      "terminalSuccessRate": 1,
+      "attemptFailureRate": 0,
+      "duplicateEffects": 0,
+      "missingCompletedEffects": 0,
+      "executionMs": {
+        "p50": 254,
+        "p95": 363,
+        "p99": 375
+      },
+      "endToEndMs": {
+        "p50": 653,
+        "p95": 872,
+        "p99": 935
+      },
+      "submitMs": {
+        "max": 69.027,
+        "med": 18.3755,
+        "p(95)": 39.81215,
+        "p(99)": 53.181349999999995
+      },
+      "droppedIterations": 0,
+      "httpFailureRate": 0,
+      "observedWorkerCpuCores": 0.14413793103448283,
+      "observedWorkerRssMiB": 285.6328125,
+      "observedNonterminalJobs": 12,
+      "observedOutboxLagSeconds": 0.544,
+      "prometheus": {
+        "workerCpu": [
+          {
+            "worker": 1,
+            "values": [
+              [1795165295.419, "0.06787931034482765"],
+              [1795165310.419, "0.0673620689655173"],
+              [1795165325.419, "0.06789655172413801"]
+            ]
+          },
+          {
+            "worker": 2,
+            "values": [
+              [1795165295.419, "0.07408620689655168"],
+              [1795165310.419, "0.07622413793103446"],
+              [1795165325.419, "0.07624137931034482"]
+            ]
+          }
+        ],
+        "workerRss": [
+          {
+            "worker": 1,
+            "values": [
+              [1795165295.419, "149499904"],
+              [1795165310.419, "149024768"],
+              [1795165325.419, "149569536"]
+            ]
+          },
+          {
+            "worker": 2,
+            "values": [
+              [1795165295.419, "149528576"],
+              [1795165310.419, "150159360"],
+              [1795165325.419, "149938176"]
+            ]
+          }
+        ],
+        "nonterminalJobs": [
+          {
+            "status": "PENDING",
+            "values": [
+              [1795165295.419, "7"],
+              [1795165310.419, "7"],
+              [1795165325.419, "9"]
+            ]
+          },
+          {
+            "status": "QUEUED",
+            "values": [
+              [1795165295.419, "2"],
+              [1795165310.419, "0"],
+              [1795165325.419, "0"]
+            ]
+          },
+          {
+            "status": "RETRY_WAIT",
+            "values": [
+              [1795165295.419, "0"],
+              [1795165310.419, "0"],
+              [1795165325.419, "0"]
+            ]
+          },
+          {
+            "status": "RUNNING",
+            "values": [
+              [1795165295.419, "3"],
+              [1795165310.419, "2"],
+              [1795165325.419, "1"]
+            ]
+          }
+        ],
+        "outboxLagSeconds": [
+          [
+            [1795165295.419, "0.488"],
+            [1795165310.419, "0.41"],
+            [1795165325.419, "0.544"]
+          ]
+        ]
+      }
+    },
+    {
+      "workerCount": 4,
+      "repetition": 1,
+      "warmup": false,
+      "runId": "4d01a5c1-48e6-4a76-87b3-13f5b960372f",
+      "startedAt": "2026-11-20T09:02:24.916Z",
+      "endedAt": "2026-11-20T09:02:55.487Z",
+      "k6ExitCode": 0,
+      "reportedAccepted": 451,
+      "accepted": 451,
+      "completed": 451,
+      "dead": 0,
+      "cancelled": 0,
+      "remaining": 0,
+      "completedInWindow": 449,
+      "observedWindowSeconds": 30.571,
+      "completionsPerSecond": 14.687121782081057,
+      "retried": 0,
+      "failedAttempts": 0,
+      "totalFinishedAttempts": 451,
+      "terminalSuccessRate": 1,
+      "attemptFailureRate": 0,
+      "duplicateEffects": 0,
+      "missingCompletedEffects": 0,
+      "executionMs": {
+        "p50": 254,
+        "p95": 363,
+        "p99": 370
+      },
+      "endToEndMs": {
+        "p50": 632,
+        "p95": 860,
+        "p99": 944
+      },
+      "submitMs": {
+        "med": 17.724,
+        "p(95)": 39.94515,
+        "p(99)": 59.024,
+        "max": 139.6768
+      },
+      "droppedIterations": 0,
+      "httpFailureRate": 0,
+      "observedWorkerCpuCores": 0.13314981308080875,
+      "observedWorkerRssMiB": 439.8828125,
+      "observedNonterminalJobs": 12,
+      "observedOutboxLagSeconds": 0.42,
+      "prometheus": {
+        "workerCpu": [
+          {
+            "worker": 1,
+            "values": [
+              [1795165344.916, "0.01368018472222222"],
+              [1795165359.916, "0.022915236309523808"],
+              [1795165374.916, "0.03300825"]
+            ]
+          },
+          {
+            "worker": 2,
+            "values": [
+              [1795165344.916, "0.013234799999999998"],
+              [1795165359.916, "0.024446825000000002"],
+              [1795165374.916, "0.031185869047619056"]
+            ]
+          },
+          {
+            "worker": 3,
+            "values": [
+              [1795165344.916, "0.013774841666666666"],
+              [1795165359.916, "0.022776792307692313"],
+              [1795165374.916, "0.034199437215007907"]
+            ]
+          },
+          {
+            "worker": 4,
+            "values": [
+              [1795165344.916, "0.011853295238095238"],
+              [1795165359.916, "0.023280171428571427"],
+              [1795165374.916, "0.03475625681818179"]
+            ]
+          }
+        ],
+        "workerRss": [
+          {
+            "worker": 1,
+            "values": [
+              [1795165344.916, "115310592"],
+              [1795165359.916, "97206272"],
+              [1795165374.916, "108490752"]
+            ]
+          },
+          {
+            "worker": 2,
+            "values": [
+              [1795165344.916, "115200000"],
+              [1795165359.916, "96702464"],
+              [1795165374.916, "108707840"]
+            ]
+          },
+          {
+            "worker": 3,
+            "values": [
+              [1795165344.916, "114753536"],
+              [1795165359.916, "99823616"],
+              [1795165374.916, "110190592"]
+            ]
+          },
+          {
+            "worker": 4,
+            "values": [
+              [1795165344.916, "115986432"],
+              [1795165359.916, "96804864"],
+              [1795165374.916, "110465024"]
+            ]
+          }
+        ],
+        "nonterminalJobs": [
+          {
+            "status": "PENDING",
+            "values": [
+              [1795165344.916, "2"],
+              [1795165359.916, "1"],
+              [1795165374.916, "5"]
+            ]
+          },
+          {
+            "status": "QUEUED",
+            "values": [
+              [1795165344.916, "0"],
+              [1795165359.916, "5"],
+              [1795165374.916, "3"]
+            ]
+          },
+          {
+            "status": "RETRY_WAIT",
+            "values": [
+              [1795165344.916, "0"],
+              [1795165359.916, "0"],
+              [1795165374.916, "0"]
+            ]
+          },
+          {
+            "status": "RUNNING",
+            "values": [
+              [1795165344.916, "5"],
+              [1795165359.916, "6"],
+              [1795165374.916, "3"]
+            ]
+          }
+        ],
+        "outboxLagSeconds": [
+          [
+            [1795165344.916, "0.233"],
+            [1795165359.916, "0.35"],
+            [1795165374.916, "0.42"]
+          ]
+        ]
+      }
+    },
+    {
+      "workerCount": 4,
+      "repetition": 2,
+      "warmup": false,
+      "runId": "4b3f0ef7-1d07-40a3-ba9b-4c6a50519c19",
+      "startedAt": "2026-11-20T09:03:13.114Z",
+      "endedAt": "2026-11-20T09:03:44.020Z",
+      "k6ExitCode": 0,
+      "reportedAccepted": 451,
+      "accepted": 451,
+      "completed": 451,
+      "dead": 0,
+      "cancelled": 0,
+      "remaining": 0,
+      "completedInWindow": 450,
+      "observedWindowSeconds": 30.906,
+      "completionsPerSecond": 14.560279557367503,
+      "retried": 0,
+      "failedAttempts": 0,
+      "totalFinishedAttempts": 451,
+      "terminalSuccessRate": 1,
+      "attemptFailureRate": 0,
+      "duplicateEffects": 0,
+      "missingCompletedEffects": 0,
+      "executionMs": {
+        "p50": 257,
+        "p95": 367,
+        "p99": 386
+      },
+      "endToEndMs": {
+        "p50": 723,
+        "p95": 941,
+        "p99": 1036
+      },
+      "submitMs": {
+        "med": 21.3226,
+        "p(95)": 46.929550000000006,
+        "p(99)": 72.1934,
+        "max": 143.9968
+      },
+      "droppedIterations": 0,
+      "httpFailureRate": 0,
+      "observedWorkerCpuCores": 0.17484482758620687,
+      "observedWorkerRssMiB": 481.9375,
+      "observedNonterminalJobs": 12,
+      "observedOutboxLagSeconds": 0.534,
+      "prometheus": {
+        "workerCpu": [
+          {
+            "worker": 1,
+            "values": [
+              [1795165393.114, "0.044189655172413786"],
+              [1795165408.114, "0.0412012136257068"],
+              [1795165423.114, "0.04310344827586207"]
+            ]
+          },
+          {
+            "worker": 2,
+            "values": [
+              [1795165393.114, "0.03960344827586206"],
+              [1795165408.114, "0.04013793103448276"],
+              [1795165423.114, "0.044172413793103445"]
+            ]
+          },
+          {
+            "worker": 3,
+            "values": [
+              [1795165393.114, "0.04391379310344827"],
+              [1795165408.114, "0.03986206896551724"],
+              [1795165423.114, "0.041758620689655176"]
+            ]
+          },
+          {
+            "worker": 4,
+            "values": [
+              [1795165393.114, "0.043379310344827574"],
+              [1795165408.114, "0.04229310344827586"],
+              [1795165423.114, "0.045810344827586204"]
+            ]
+          }
+        ],
+        "workerRss": [
+          {
+            "worker": 1,
+            "values": [
+              [1795165393.114, "118075392"],
+              [1795165408.114, "126492672"],
+              [1795165423.114, "126668800"]
+            ]
+          },
+          {
+            "worker": 2,
+            "values": [
+              [1795165393.114, "119783424"],
+              [1795165408.114, "127062016"],
+              [1795165423.114, "126177280"]
+            ]
+          },
+          {
+            "worker": 3,
+            "values": [
+              [1795165393.114, "117321728"],
+              [1795165408.114, "125333504"],
+              [1795165423.114, "123219968"]
+            ]
+          },
+          {
+            "worker": 4,
+            "values": [
+              [1795165393.114, "117338112"],
+              [1795165408.114, "126459904"],
+              [1795165423.114, "125030400"]
+            ]
+          }
+        ],
+        "nonterminalJobs": [
+          {
+            "status": "PENDING",
+            "values": [
+              [1795165393.114, "6"],
+              [1795165408.114, "3"],
+              [1795165423.114, "8"]
+            ]
+          },
+          {
+            "status": "QUEUED",
+            "values": [
+              [1795165393.114, "0"],
+              [1795165408.114, "5"],
+              [1795165423.114, "0"]
+            ]
+          },
+          {
+            "status": "RETRY_WAIT",
+            "values": [
+              [1795165393.114, "0"],
+              [1795165408.114, "0"],
+              [1795165423.114, "0"]
+            ]
+          },
+          {
+            "status": "RUNNING",
+            "values": [
+              [1795165393.114, "6"],
+              [1795165408.114, "1"],
+              [1795165423.114, "3"]
+            ]
+          }
+        ],
+        "outboxLagSeconds": [
+          [
+            [1795165393.114, "0.38"],
+            [1795165408.114, "0.534"],
+            [1795165423.114, "0.534"]
+          ]
+        ]
+      }
+    },
+    {
+      "workerCount": 4,
+      "repetition": 3,
+      "warmup": false,
+      "runId": "7757ffc6-52cc-4f9f-9051-c5f4ae361da6",
+      "startedAt": "2026-11-20T09:04:01.889Z",
+      "endedAt": "2026-11-20T09:04:32.404Z",
+      "k6ExitCode": 0,
+      "reportedAccepted": 451,
+      "accepted": 451,
+      "completed": 451,
+      "dead": 0,
+      "cancelled": 0,
+      "remaining": 0,
+      "completedInWindow": 445,
+      "observedWindowSeconds": 30.515,
+      "completionsPerSecond": 14.582991971161723,
+      "retried": 0,
+      "failedAttempts": 0,
+      "totalFinishedAttempts": 451,
+      "terminalSuccessRate": 1,
+      "attemptFailureRate": 0,
+      "duplicateEffects": 0,
+      "missingCompletedEffects": 0,
+      "executionMs": {
+        "p50": 255,
+        "p95": 362,
+        "p99": 370
+      },
+      "endToEndMs": {
+        "p50": 661,
+        "p95": 864,
+        "p99": 945
+      },
+      "submitMs": {
+        "med": 17.6589,
+        "p(95)": 38.77275,
+        "p(99)": 60.417649999999995,
+        "max": 86.4707
+      },
+      "droppedIterations": 0,
+      "httpFailureRate": 0,
+      "observedWorkerCpuCores": 0.18563793103448278,
+      "observedWorkerRssMiB": 581.4453125,
+      "observedNonterminalJobs": 11,
+      "observedOutboxLagSeconds": 0.242,
+      "prometheus": {
+        "workerCpu": [
+          {
+            "worker": 1,
+            "values": [
+              [1795165441.889, "0.04256896551724137"],
+              [1795165456.889, "0.038517241379310334"],
+              [1795165471.889, "0.0347413793103448"]
+            ]
+          },
+          {
+            "worker": 2,
+            "values": [
+              [1795165441.889, "0.050655172413793116"],
+              [1795165456.889, "0.04931034482758621"],
+              [1795165471.889, "0.04284482758620687"]
+            ]
+          },
+          {
+            "worker": 3,
+            "values": [
+              [1795165441.889, "0.045793103448275876"],
+              [1795165456.889, "0.045258620689655193"],
+              [1795165471.889, "0.041219873806158006"]
+            ]
+          },
+          {
+            "worker": 4,
+            "values": [
+              [1795165441.889, "0.046620689655172416"],
+              [1795165456.889, "0.043913793103448284"],
+              [1795165471.889, "0.04391379310344828"]
+            ]
+          }
+        ],
+        "workerRss": [
+          {
+            "worker": 1,
+            "values": [
+              [1795165441.889, "151674880"],
+              [1795165456.889, "152899584"],
+              [1795165471.889, "152018944"]
+            ]
+          },
+          {
+            "worker": 2,
+            "values": [
+              [1795165441.889, "152289280"],
+              [1795165456.889, "153145344"],
+              [1795165471.889, "153403392"]
+            ]
+          },
+          {
+            "worker": 3,
+            "values": [
+              [1795165441.889, "133337088"],
+              [1795165456.889, "149127168"],
+              [1795165471.889, "151703552"]
+            ]
+          },
+          {
+            "worker": 4,
+            "values": [
+              [1795165441.889, "134922240"],
+              [1795165456.889, "151715840"],
+              [1795165471.889, "152563712"]
+            ]
+          }
+        ],
+        "nonterminalJobs": [
+          {
+            "status": "PENDING",
+            "values": [
+              [1795165441.889, "0"],
+              [1795165456.889, "4"],
+              [1795165471.889, "1"]
+            ]
+          },
+          {
+            "status": "QUEUED",
+            "values": [
+              [1795165441.889, "0"],
+              [1795165456.889, "0"],
+              [1795165471.889, "4"]
+            ]
+          },
+          {
+            "status": "RETRY_WAIT",
+            "values": [
+              [1795165441.889, "0"],
+              [1795165456.889, "0"],
+              [1795165471.889, "0"]
+            ]
+          },
+          {
+            "status": "RUNNING",
+            "values": [
+              [1795165441.889, "0"],
+              [1795165456.889, "3"],
+              [1795165471.889, "6"]
+            ]
+          }
+        ],
+        "outboxLagSeconds": [
+          [
+            [1795165441.889, "0"],
+            [1795165456.889, "0.242"],
+            [1795165471.889, "0.242"]
+          ]
+        ]
+      }
+    },
+    {
+      "workerCount": 8,
+      "repetition": 1,
+      "warmup": false,
+      "runId": "cabb1abc-4f9c-41d8-94eb-199025ea120b",
+      "startedAt": "2026-11-20T09:04:52.671Z",
+      "endedAt": "2026-11-20T09:05:23.431Z",
+      "k6ExitCode": 0,
+      "reportedAccepted": 450,
+      "accepted": 450,
+      "completed": 450,
+      "dead": 0,
+      "cancelled": 0,
+      "remaining": 0,
+      "completedInWindow": 414,
+      "observedWindowSeconds": 30.76,
+      "completionsPerSecond": 13.459037711313393,
+      "retried": 0,
+      "failedAttempts": 0,
+      "totalFinishedAttempts": 450,
+      "terminalSuccessRate": 1,
+      "attemptFailureRate": 0,
+      "duplicateEffects": 0,
+      "missingCompletedEffects": 0,
+      "executionMs": {
+        "p50": 255,
+        "p95": 366,
+        "p99": 379
+      },
+      "endToEndMs": {
+        "p50": 1154,
+        "p95": 3359,
+        "p99": 3592
+      },
+      "submitMs": {
+        "med": 20.529049999999998,
+        "p(95)": 47.97992999999993,
+        "p(99)": 97.50679,
+        "max": 209.1766
+      },
+      "droppedIterations": 0,
+      "httpFailureRate": 0,
+      "observedWorkerCpuCores": 0.20883941140886308,
+      "observedWorkerRssMiB": 794.58203125,
+      "observedNonterminalJobs": 51,
+      "observedOutboxLagSeconds": 3.104,
+      "prometheus": {
+        "workerCpu": [
+          {
+            "worker": 1,
+            "values": [
+              [1795165492.671, "0.007230206229042109"],
+              [1795165507.671, "0.013630754690991453"],
+              [1795165522.671, "0.020479369676320264"]
+            ]
+          },
+          {
+            "worker": 2,
+            "values": [
+              [1795165492.671, "0.014715431250000004"],
+              [1795165507.671, "0.023646981381501477"],
+              [1795165522.671, "0.031712115217391305"]
+            ]
+          },
+          {
+            "worker": 3,
+            "values": [
+              [1795165492.671, "0.005993028571428572"],
+              [1795165507.671, "0.017215264285714287"],
+              [1795165522.671, "0.019856927272727268"]
+            ]
+          },
+          {
+            "worker": 4,
+            "values": [
+              [1795165492.671, "0.008915916666666664"],
+              [1795165507.671, "0.017558510714285713"],
+              [1795165522.671, "0.02340951515151515"]
+            ]
+          },
+          {
+            "worker": 5,
+            "values": [
+              [1795165492.671, "0.012068076190476193"],
+              [1795165507.671, "0.022259080555555557"],
+              [1795165522.671, "0.026783937500000004"]
+            ]
+          },
+          {
+            "worker": 6,
+            "values": [
+              [1795165492.671, "0.013794209523809525"],
+              [1795165507.671, "0.026757627222222222"],
+              [1795165522.671, "0.034932240530303034"]
+            ]
+          },
+          {
+            "worker": 7,
+            "values": [
+              [1795165492.671, "0.010617433333333334"],
+              [1795165507.671, "0.019875818888888886"],
+              [1795165522.671, "0.025048828787878785"]
+            ]
+          },
+          {
+            "worker": 8,
+            "values": [
+              [1795165492.671, "0.013459333333333334"],
+              [1795165507.671, "0.022663025"],
+              [1795165522.671, "0.02661647727272727"]
+            ]
+          }
+        ],
+        "workerRss": [
+          {
+            "worker": 1,
+            "values": [
+              [1795165492.671, "104566784"],
+              [1795165507.671, "112152576"],
+              [1795165522.671, "95584256"]
+            ]
+          },
+          {
+            "worker": 2,
+            "values": [
+              [1795165492.671, "104325120"],
+              [1795165507.671, "112570368"],
+              [1795165522.671, "94236672"]
+            ]
+          },
+          {
+            "worker": 3,
+            "values": [
+              [1795165492.671, "103731200"],
+              [1795165507.671, "92065792"],
+              [1795165522.671, "99975168"]
+            ]
+          },
+          {
+            "worker": 4,
+            "values": [
+              [1795165492.671, "104271872"],
+              [1795165507.671, "91529216"],
+              [1795165522.671, "98545664"]
+            ]
+          },
+          {
+            "worker": 5,
+            "values": [
+              [1795165492.671, "104640512"],
+              [1795165507.671, "92483584"],
+              [1795165522.671, "95342592"]
+            ]
+          },
+          {
+            "worker": 6,
+            "values": [
+              [1795165492.671, "103948288"],
+              [1795165507.671, "92667904"],
+              [1795165522.671, "99102720"]
+            ]
+          },
+          {
+            "worker": 7,
+            "values": [
+              [1795165492.671, "103972864"],
+              [1795165507.671, "91545600"],
+              [1795165522.671, "95834112"]
+            ]
+          },
+          {
+            "worker": 8,
+            "values": [
+              [1795165492.671, "103723008"],
+              [1795165507.671, "91746304"],
+              [1795165522.671, "97374208"]
+            ]
+          }
+        ],
+        "nonterminalJobs": [
+          {
+            "status": "PENDING",
+            "values": [
+              [1795165492.671, "2"],
+              [1795165507.671, "4"],
+              [1795165522.671, "43"]
+            ]
+          },
+          {
+            "status": "QUEUED",
+            "values": [
+              [1795165492.671, "4"],
+              [1795165507.671, "1"],
+              [1795165522.671, "4"]
+            ]
+          },
+          {
+            "status": "RETRY_WAIT",
+            "values": [
+              [1795165492.671, "0"],
+              [1795165507.671, "0"],
+              [1795165522.671, "0"]
+            ]
+          },
+          {
+            "status": "RUNNING",
+            "values": [
+              [1795165492.671, "2"],
+              [1795165507.671, "4"],
+              [1795165522.671, "4"]
+            ]
+          }
+        ],
+        "outboxLagSeconds": [
+          [
+            [1795165492.671, "0.484"],
+            [1795165507.671, "0.312"],
+            [1795165522.671, "3.104"]
+          ]
+        ]
+      }
+    },
+    {
+      "workerCount": 8,
+      "repetition": 2,
+      "warmup": false,
+      "runId": "14bf0a54-bf9e-49bf-93f8-28c6bf0648dd",
+      "startedAt": "2026-11-20T09:05:42.202Z",
+      "endedAt": "2026-11-20T09:06:12.911Z",
+      "k6ExitCode": 0,
+      "reportedAccepted": 451,
+      "accepted": 451,
+      "completed": 451,
+      "dead": 0,
+      "cancelled": 0,
+      "remaining": 0,
+      "completedInWindow": 446,
+      "observedWindowSeconds": 30.709,
+      "completionsPerSecond": 14.523429613468364,
+      "retried": 0,
+      "failedAttempts": 0,
+      "totalFinishedAttempts": 451,
+      "terminalSuccessRate": 1,
+      "attemptFailureRate": 0,
+      "duplicateEffects": 0,
+      "missingCompletedEffects": 0,
+      "executionMs": {
+        "p50": 256,
+        "p95": 368,
+        "p99": 393
+      },
+      "endToEndMs": {
+        "p50": 662,
+        "p95": 887,
+        "p99": 961
+      },
+      "submitMs": {
+        "med": 18.3127,
+        "p(95)": 38.9778,
+        "p(99)": 79.16605,
+        "max": 181.0582
+      },
+      "droppedIterations": 0,
+      "httpFailureRate": 0,
+      "observedWorkerCpuCores": 0.23708620689655166,
+      "observedWorkerRssMiB": 839.26953125,
+      "observedNonterminalJobs": 11,
+      "observedOutboxLagSeconds": 0.455,
+      "prometheus": {
+        "workerCpu": [
+          {
+            "worker": 1,
+            "values": [
+              [1795165542.202, "0.02370689655172413"],
+              [1795165557.202, "0.022362068965517228"],
+              [1795165572.202, "0.02344827586206897"]
+            ]
+          },
+          {
+            "worker": 2,
+            "values": [
+              [1795165542.202, "0.03260344827586206"],
+              [1795165557.202, "0.027224137931034478"],
+              [1795165572.202, "0.02505172413793104"]
+            ]
+          },
+          {
+            "worker": 3,
+            "values": [
+              [1795165542.202, "0.026137931034482753"],
+              [1795165557.202, "0.022637931034482757"],
+              [1795165572.202, "0.017775862068965528"]
+            ]
+          },
+          {
+            "worker": 4,
+            "values": [
+              [1795165542.202, "0.030431034482758624"],
+              [1795165557.202, "0.026396551724137948"],
+              [1795165572.202, "0.02210344827586208"]
+            ]
+          },
+          {
+            "worker": 5,
+            "values": [
+              [1795165542.202, "0.02801724137931034"],
+              [1795165557.202, "0.024241379310344827"],
+              [1795165572.202, "0.023431034482758625"]
+            ]
+          },
+          {
+            "worker": 6,
+            "values": [
+              [1795165542.202, "0.038793103448275856"],
+              [1795165557.202, "0.03313793103448276"],
+              [1795165572.202, "0.028017241379310352"]
+            ]
+          },
+          {
+            "worker": 7,
+            "values": [
+              [1795165542.202, "0.029379310344827585"],
+              [1795165557.202, "0.02720689655172415"],
+              [1795165572.202, "0.02505172413793105"]
+            ]
+          },
+          {
+            "worker": 8,
+            "values": [
+              [1795165542.202, "0.02801724137931033"],
+              [1795165557.202, "0.02370689655172413"],
+              [1795165572.202, "0.020707461915827532"]
+            ]
+          }
+        ],
+        "workerRss": [
+          {
+            "worker": 1,
+            "values": [
+              [1795165542.202, "104091648"],
+              [1795165557.202, "107401216"],
+              [1795165572.202, "108736512"]
+            ]
+          },
+          {
+            "worker": 2,
+            "values": [
+              [1795165542.202, "100970496"],
+              [1795165557.202, "107872256"],
+              [1795165572.202, "108793856"]
+            ]
+          },
+          {
+            "worker": 3,
+            "values": [
+              [1795165542.202, "107540480"],
+              [1795165557.202, "109027328"],
+              [1795165572.202, "111783936"]
+            ]
+          },
+          {
+            "worker": 4,
+            "values": [
+              [1795165542.202, "105963520"],
+              [1795165557.202, "108847104"],
+              [1795165572.202, "111579136"]
+            ]
+          },
+          {
+            "worker": 5,
+            "values": [
+              [1795165542.202, "102404096"],
+              [1795165557.202, "102457344"],
+              [1795165572.202, "104767488"]
+            ]
+          },
+          {
+            "worker": 6,
+            "values": [
+              [1795165542.202, "108470272"],
+              [1795165557.202, "109531136"],
+              [1795165572.202, "114954240"]
+            ]
+          },
+          {
+            "worker": 7,
+            "values": [
+              [1795165542.202, "101900288"],
+              [1795165557.202, "102486016"],
+              [1795165572.202, "107610112"]
+            ]
+          },
+          {
+            "worker": 8,
+            "values": [
+              [1795165542.202, "106745856"],
+              [1795165557.202, "108412928"],
+              [1795165572.202, "111812608"]
+            ]
+          }
+        ],
+        "nonterminalJobs": [
+          {
+            "status": "PENDING",
+            "values": [
+              [1795165542.202, "0"],
+              [1795165557.202, "2"],
+              [1795165572.202, "7"]
+            ]
+          },
+          {
+            "status": "QUEUED",
+            "values": [
+              [1795165542.202, "0"],
+              [1795165557.202, "4"],
+              [1795165572.202, "0"]
+            ]
+          },
+          {
+            "status": "RETRY_WAIT",
+            "values": [
+              [1795165542.202, "0"],
+              [1795165557.202, "0"],
+              [1795165572.202, "0"]
+            ]
+          },
+          {
+            "status": "RUNNING",
+            "values": [
+              [1795165542.202, "0"],
+              [1795165557.202, "5"],
+              [1795165572.202, "2"]
+            ]
+          }
+        ],
+        "outboxLagSeconds": [
+          [
+            [1795165542.202, "0"],
+            [1795165557.202, "0.388"],
+            [1795165572.202, "0.455"]
+          ]
+        ]
+      }
+    },
+    {
+      "workerCount": 8,
+      "repetition": 3,
+      "warmup": false,
+      "runId": "ffbdad6a-1e7a-4d39-b3d4-2a122633cc3b",
+      "startedAt": "2026-11-20T09:06:30.777Z",
+      "endedAt": "2026-11-20T09:07:02.099Z",
+      "k6ExitCode": 0,
+      "reportedAccepted": 451,
+      "accepted": 451,
+      "completed": 451,
+      "dead": 0,
+      "cancelled": 0,
+      "remaining": 0,
+      "completedInWindow": 451,
+      "observedWindowSeconds": 31.322,
+      "completionsPerSecond": 14.398825106953579,
+      "retried": 0,
+      "failedAttempts": 0,
+      "totalFinishedAttempts": 451,
+      "terminalSuccessRate": 1,
+      "attemptFailureRate": 0,
+      "duplicateEffects": 0,
+      "missingCompletedEffects": 0,
+      "executionMs": {
+        "p50": 257,
+        "p95": 366,
+        "p99": 396
+      },
+      "endToEndMs": {
+        "p50": 731,
+        "p95": 1013,
+        "p99": 1148
+      },
+      "submitMs": {
+        "p(95)": 42.585750000000004,
+        "p(99)": 70.8255,
+        "max": 99.1351,
+        "med": 21.1909
+      },
+      "droppedIterations": 0,
+      "httpFailureRate": 0,
+      "observedWorkerCpuCores": 0.17293103448275876,
+      "observedWorkerRssMiB": 901.28125,
+      "observedNonterminalJobs": 13,
+      "observedOutboxLagSeconds": 0.553,
+      "prometheus": {
+        "workerCpu": [
+          {
+            "worker": 1,
+            "values": [
+              [1795165590.777, "0.022913793103448293"],
+              [1795165605.777, "0.020729141516917897"],
+              [1795165620.777, "0.020741379310344855"]
+            ]
+          },
+          {
+            "worker": 2,
+            "values": [
+              [1795165590.777, "0.022362068965517245"],
+              [1795165605.777, "0.022896551724137928"],
+              [1795165620.777, "0.025037072800634545"]
+            ]
+          },
+          {
+            "worker": 3,
+            "values": [
+              [1795165590.777, "0.016965517241379333"],
+              [1795165605.777, "0.014827586206896576"],
+              [1795165620.777, "0.01779310344827587"]
+            ]
+          },
+          {
+            "worker": 4,
+            "values": [
+              [1795165590.777, "0.01884482758620692"],
+              [1795165605.777, "0.017775862068965535"],
+              [1795165620.777, "0.019931034482758646"]
+            ]
+          },
+          {
+            "worker": 5,
+            "values": [
+              [1795165590.777, "0.022620689655172426"],
+              [1795165605.777, "0.02558620689655174"],
+              [1795165620.777, "0.023431034482758604"]
+            ]
+          },
+          {
+            "worker": 6,
+            "values": [
+              [1795165590.777, "0.026413793103448307"],
+              [1795165605.777, "0.023448275862068994"],
+              [1795165620.777, "0.02586206896551728"]
+            ]
+          },
+          {
+            "worker": 7,
+            "values": [
+              [1795165590.777, "0.022879310344827607"],
+              [1795165605.777, "0.022086206896551757"],
+              [1795165620.777, "0.02127586206896554"]
+            ]
+          },
+          {
+            "worker": 8,
+            "values": [
+              [1795165590.777, "0.01993103448275864"],
+              [1795165605.777, "0.019396551724137963"],
+              [1795165620.777, "0.018603448275862102"]
+            ]
+          }
+        ],
+        "workerRss": [
+          {
+            "worker": 1,
+            "values": [
+              [1795165590.777, "122351616"],
+              [1795165605.777, "120344576"],
+              [1795165620.777, "122314752"]
+            ]
+          },
+          {
+            "worker": 2,
+            "values": [
+              [1795165590.777, "120700928"],
+              [1795165605.777, "112951296"],
+              [1795165620.777, "114982912"]
+            ]
+          },
+          {
+            "worker": 3,
+            "values": [
+              [1795165590.777, "122462208"],
+              [1795165605.777, "110698496"],
+              [1795165620.777, "113704960"]
+            ]
+          },
+          {
+            "worker": 4,
+            "values": [
+              [1795165590.777, "122753024"],
+              [1795165605.777, "113324032"],
+              [1795165620.777, "116383744"]
+            ]
+          },
+          {
+            "worker": 5,
+            "values": [
+              [1795165590.777, "104202240"],
+              [1795165605.777, "92721152"],
+              [1795165620.777, "105521152"]
+            ]
+          },
+          {
+            "worker": 6,
+            "values": [
+              [1795165590.777, "121999360"],
+              [1795165605.777, "110112768"],
+              [1795165620.777, "111722496"]
+            ]
+          },
+          {
+            "worker": 7,
+            "values": [
+              [1795165590.777, "108081152"],
+              [1795165605.777, "111013888"],
+              [1795165620.777, "118005760"]
+            ]
+          },
+          {
+            "worker": 8,
+            "values": [
+              [1795165590.777, "122511360"],
+              [1795165605.777, "122458112"],
+              [1795165620.777, "124411904"]
+            ]
+          }
+        ],
+        "nonterminalJobs": [
+          {
+            "status": "PENDING",
+            "values": [
+              [1795165590.777, "0"],
+              [1795165605.777, "6"],
+              [1795165620.777, "2"]
+            ]
+          },
+          {
+            "status": "QUEUED",
+            "values": [
+              [1795165590.777, "0"],
+              [1795165605.777, "4"],
+              [1795165620.777, "6"]
+            ]
+          },
+          {
+            "status": "RETRY_WAIT",
+            "values": [
+              [1795165590.777, "0"],
+              [1795165605.777, "0"],
+              [1795165620.777, "0"]
+            ]
+          },
+          {
+            "status": "RUNNING",
+            "values": [
+              [1795165590.777, "4"],
+              [1795165605.777, "2"],
+              [1795165620.777, "5"]
+            ]
+          }
+        ],
+        "outboxLagSeconds": [
+          [
+            [1795165590.777, "0"],
+            [1795165605.777, "0.553"],
+            [1795165620.777, "0.42"]
+          ]
+        ]
+      }
+    }
+  ]
+}

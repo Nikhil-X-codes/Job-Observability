@@ -1,6 +1,6 @@
 # JobFlow Project Tracker
 
-**Status:** Native application, dashboard, and outage checks are verified. Compose, monitoring, publication, and measured benchmark evidence have separate gates.
+**Status:** Native application, outage recovery, Grafana, and the worker-scaling benchmark are verified. Live Compose, hosted CI, publication, and AWS release have separate gates.
 
 | Phase | State | Evidence (PR, test log, screenshots, URL) | Blocker |
 |---|---|---|---|
@@ -11,25 +11,26 @@
 | 04 Reliability | DONE | Native worker kill/recovery, broker restart, database outage recovery, 5 PostgreSQL failure tests and 7 API tests passed | Compose runtime tracked in Phase 01 |
 | 05 Dashboard | DONE | [Chrome smoke](tests/ui/smoke.mjs) and [dashboard screenshot](docs/assets/jobflow-overview.png) | — |
 | 06 Observability | DONE | Native Prometheus scraped four processes and matched PostgreSQL completion counts. Grafana returned live rate and p95 queries. [Rendered dashboard](docs/assets/jobflow-grafana.png) | Compose runtime tracked in Phase 01 |
-| 07 Benchmarks | IN PROGRESS | Reconciliation tests, k6 scenario inspection, and native worker setup and cleanup at one and two workers | Isolated measurement window and recorded environment |
+| 07 Benchmarks | DONE | 12 measured runs at 1, 2, 4, and 8 workers. All 5,410 accepted jobs completed after drain. [Report and per-run data](benchmarks/results/2026-11-20-native-mixed/REPORT.md) | Fixed-rate scaling evidence. Saturation and repeated fault-timing measurements remain open |
 | 08 AWS Release | DEFERRED | Offline production Compose verification exposed only web ports 80 and 443 | Final release stage, account, region, and budget |
-| 09 Portfolio | IN PROGRESS | Local Git, [recorded operator walkthrough](docs/assets/jobflow-demo.webm), screenshots, and functional test evidence | Repository destination and benchmark evidence |
+| 09 Portfolio | IN PROGRESS | Verified 2:17 [operator walkthrough](docs/assets/jobflow-demo.webm), screenshots, and [measured benchmark evidence](benchmarks/results/2026-11-20-native-mixed/REPORT.md) | Publication to the selected GitHub repository remains pending |
 
 ## Decisions
 
 - App code is **JavaScript (ESM)**.
 - **PostgreSQL** is system of record, **RabbitMQ** is message transport.
 - **AWS EC2 + Docker Compose** is first cloud target; production-grade multi-node HA is out of scope.
-- No benchmark/uptime/recovery metrics have been measured yet.
+- Performance figures apply to the versioned native workload in the benchmark ledger. Time-to-recovery and uptime claims are pending.
 
 ## Benchmark ledger
 
 | Date | Git SHA | Workload | Workers | Duration | Throughput | p95 end-to-end | Recovery | Report |
 |---|---|---|---|---|---|---|---|---|
-| — | — | — | — | — | — | — | — | — |
+| 2026-11-20 | `fd07243` | Mixed, 15 submissions/s | 1, 2, 4, 8 | 15s warmup + 30s measured, 3 repetitions each | Median 14.40–14.58 completed jobs/s | Median of run p95s 864–1,013 ms | Functional coverage only | [Native report](benchmarks/results/2026-11-20-native-mixed/REPORT.md) |
 
 ## Open decision log
 
+- [x] Publication destination selected. [GitHub repository](https://github.com/Nikhil-X-codes/Job-Observability)
 - [ ] AWS account plan/region and hard monthly budget (required before deployment)
 - [ ] Public domain for HTTPS (or an approved alternative)
 - [x] Exact Node, RabbitMQ, PostgreSQL, and Caddy image tags are pinned in [the Dockerfile](infra/Dockerfile) and [Compose configuration](infra/compose.yaml)
@@ -81,6 +82,16 @@
 - **Monitoring evidence** — `node tests/native/observability.mjs` passed with isolated native services. The test reconciled the Prometheus completion counter against PostgreSQL and queried the provisioned Grafana dashboard's live datasource, including execution and end-to-end histograms.
 - **Release evidence** — AWS is deferred until the final stage. Live Compose and hosted CI gates remain open.
 - **Portfolio evidence** — Playwright recorded the local sign-in, pending and queued states, completion, replay, and reconnect flow. The browser smoke also passed the mobile layout check after a dashboard grid resize fix. Lint, formatting, the production web build, and 34 unit tests passed. npm audit reported zero vulnerabilities.
+
+## Reserved benchmark handoff — 2026-11-20
+
+- **Phase** — Phases 01, 07, and 09.
+- **Objective** — Collect a comparable worker-scaling baseline and package evidence locally before publication.
+- **Changes made** — Added a bounded Windows sharing-violation retry to the native scrape-target update, kept the change atomic, and saved a reproducible source commit. The first attempt stopped at the worker transition because the Prometheus target file was briefly open. Only the complete rerun is used in the report.
+- **Commands and results** — `npm run lint`, `npm run format:check`, and `npm run test:unit` (34 tests) passed before the measured run. The reserved native fixture ran `scripts/run-benchmark.mjs` at commit `fd07243022952964c3d20055df66778754c9a8ef` and exited 0. All 12 measured cohorts passed k6 admission thresholds and PostgreSQL reconciliation.
+- **Acceptance evidence** — All 5,410 jobs completed after drain and 5,185 completed within the throughput windows. PostgreSQL found zero duplicate or missing effects and zero unfinished jobs. The report records the host, workload, windows, retries, latencies, and per-run Prometheus samples. [Benchmark report](benchmarks/results/2026-11-20-native-mixed/REPORT.md)
+- **Portfolio verification** — `node tests/ui/smoke.mjs` in recording mode exited 0 with fresh native PostgreSQL and RabbitMQ services. The browser showed a real worker claim, forced exit, retry and completion. The test asserted one database effect and exercised linked replay, reconnect, and mobile layout. Extracted frames confirmed the retry history and Grafana ending in the 2:17 WebM. [Operator walkthrough](docs/assets/jobflow-demo.webm)
+- **Open issues and risks** — Saturation and recovery timing require separate studies. The GitHub target is public and had no commits at verification. Live Compose, hosted CI, and AWS remain pending.
 
 ## Session handoff — 2026-11-20
 

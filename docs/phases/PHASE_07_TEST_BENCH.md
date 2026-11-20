@@ -1,6 +1,6 @@
 # Phase 07 — Performance, scale & failure benchmarks
 
-**Status:** Native and Compose runners implemented. k6 scenario inspection and reconciliation tests cover the harness. Isolated measurement runs remain open.
+**Status:** The isolated native worker-scaling baseline is complete. The full report covers 12 measured runs and 5,410 accepted jobs across 1, 2, 4, and 8 workers. [Report](../../benchmarks/results/2026-11-20-native-mixed/REPORT.md)
 
 ## Goal
 
@@ -22,11 +22,13 @@ Read `AGENTS.md`, `docs/ARCHITECTURE.md`, `docs/DATA_AND_API_CONTRACTS.md`, and 
 
 ## Exit criteria — must demonstrate
 
-- [ ] Each reported metric has a script, traceable raw data and method.
-- [ ] Results mention hardware, versions, SHA, dataset, workers, window, repetitions.
-- [ ] Invariants hold for each scenario; no hidden backlog excluded from throughput story.
-- [ ] Scaling speedup compared using same host/workload, not apples-to-oranges.
-- [ ] No unsourced numbers entered in README or resume template.
+- [x] Each published metric has a script, traceable raw data and method.
+- [x] Results mention hardware, versions, SHA, dataset, workers, window, repetitions.
+- [x] The measured cohorts reconcile and report completions during the window and after drain separately.
+- [x] Worker counts were compared using the same host, workload and settings.
+- [x] README and resume figures link to the measured profile.
+
+The benchmark uses a fixed offered rate. A rate sweep, burst measurements, and repeated timing of injected failures are open. Existing native failure tests cover retries, lease recovery, redelivery, broker restart, and database outage as functional checks.
 
 ## Deliverables
 

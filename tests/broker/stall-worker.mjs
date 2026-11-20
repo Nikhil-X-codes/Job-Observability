@@ -3,6 +3,7 @@ import { claimExecution } from "@jobflow/db/processing";
 import { decodeDelivery, queue, withQueue } from "@jobflow/queue";
 
 const db = createDatabase(process.env.DATABASE_URL);
+const leaseMs = Number(process.argv[2] ?? 1000);
 await withQueue(process.env.AMQP_URL, false, async (channel, disconnected) => {
   await channel.prefetch(1);
   await channel.consume(
@@ -14,7 +15,12 @@ await withQueue(process.env.AMQP_URL, false, async (channel, disconnected) => {
         channel.reject(message, false);
         return;
       }
-      const lease = await claimExecution(db, envelope, "worker-to-kill", 1000);
+      const lease = await claimExecution(
+        db,
+        envelope,
+        "worker-to-kill",
+        leaseMs,
+      );
       if (!lease) channel.ack(message);
     },
     { noAck: false },

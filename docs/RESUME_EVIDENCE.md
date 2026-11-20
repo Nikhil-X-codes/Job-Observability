@@ -8,16 +8,11 @@
 - 2–4 minute demo script showing a job completing and a running worker being killed/recovered.
 - AWS HTTPS demo if budget and account permit. Clearly mark single-host topology.
 
-## Resume bullet templates — DO NOT FILL UNTIL MEASURED
+## Evidence-backed resume bullets
 
-```text
-JobFlow | Distributed Job Processing Platform — JavaScript, React, Node.js, RabbitMQ, PostgreSQL, Docker, AWS
-• Built an asynchronous job platform with durable outbox-based submission, N concurrent workers, retries, delayed execution, DLQ and live React monitoring.
-• Measured [X] sustained completed jobs/sec under [workload] on [hardware], a [Y]× speedup from [1] to [N] workers; documented p95 [execution/e2e] latency of [Z] ms.
-• Validated worker-crash recovery (median [R] s across [K] repeated tests), fenced stale writes and prevented duplicate committed demo effects in [D] injected duplicate-delivery tests.
-```
-
-Remove any clause you have not actually built, tested and verified. Do not call the system "exactly once" or "zero data loss" without carefully scoped empirical evidence.
+- Built an asynchronous job processor with a PostgreSQL transactional outbox, RabbitMQ quorum queue, fenced worker leases, retries, dead-letter replay, and a live React dashboard. [Architecture](ARCHITECTURE.md)
+- Benchmarked 1, 2, 4, and 8 worker processes at 15 submissions per second on one Windows host. Verified completion of all 5,410 accepted jobs across 12 measured runs with zero duplicate committed demo effects. [Benchmark report](../benchmarks/results/2026-11-20-native-mixed/REPORT.md)
+- Tested worker-crash recovery and pre-ACK redelivery against RabbitMQ and PostgreSQL. In the crash test, a replacement worker completed the expired claim and committed one demo effect. [Broker integration tests](../tests/broker/delivery.test.js)
 
 ## Interview explanations to practice
 
@@ -41,13 +36,13 @@ Create three jobs of varying priority → show job rows and attempts → bring u
 - Implemented transactional job submission and checked concurrent duplicate requests, a forced outbox insert failure, and tenant scoping against PostgreSQL. [API integration suite](../tests/integration/jobs.test.js)
 - Verified confirmed RabbitMQ delivery, manual ACK after database completion, and a replacement worker completing an expired claim after a forced process exit. The tested job produced one durable demo effect. [Broker recovery suite](../tests/broker/delivery.test.js)
 - Verified sign-in, job submission, job history, linked replay, and REST reconciliation after a browser disconnect. [Chrome smoke](../tests/ui/smoke.mjs) · [Overview screenshot](assets/jobflow-overview.png)
-- Recorded the real local operator flow from sign-in through job completion and dead-letter replay. [Browser recording](assets/jobflow-demo.webm)
+- Recorded a 2:17 local walkthrough showing a forced worker exit, a lease-expiry retry, one committed effect, dead-letter replay, and the verified Grafana dashboard. [Browser recording](assets/jobflow-demo.webm)
 
 ### Suggested demo recording sequence
 
-1. Open the dashboard, sign in, and submit a report job. Show queued and completed states and the attempt timeline.
-2. Run the broker recovery suite and show the killed claim, the `LEASE_EXPIRED` attempt outcome, and the replacement worker's completion.
-3. Open Dead letters, supply a replay reason, and follow the new job back to the original record.
-4. Open Grafana and compare execution latency with end-to-end latency. Explain which timestamps each panel represents.
+1. Open the dashboard, sign in, and submit a report job. Show the pending, queued, and running states.
+2. Kill the paused worker. Show the scheduler's lease-expiry retry and the replacement worker's completion.
+3. Open Dead letters, replay a separate failed job with a reason, and follow the link to the original record.
+4. Show the Grafana capture and compare execution latency with end-to-end latency.
 
 **Interview tradeoffs.** The outbox keeps acceptance independent of the broker. Publishing and confirming a message can race a process failure, so PostgreSQL claims and token fencing control state writes and the demo effect is committed in the same transaction. Realtime notifications prompt REST reads because a notification can be missed. Dashboard counters are operational signals. Benchmark claims require matching versioned test cohorts and raw measurement artifacts.
