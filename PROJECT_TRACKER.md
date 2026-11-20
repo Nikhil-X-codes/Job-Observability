@@ -1,19 +1,19 @@
 # JobFlow Project Tracker
 
-**Status:** Native application, outage recovery, Grafana, and the worker-scaling benchmark are verified. Live Compose, hosted CI, publication, and AWS release have separate gates.
+**Status:** The code is public and hosted CI passed, including the live Compose integration suite. Native Grafana, the fixed-rate benchmark, and the portfolio walkthrough are verified. AWS release remains deferred.
 
 | Phase | State | Evidence (PR, test log, screenshots, URL) | Blocker |
 |---|---|---|---|
 | 00 Discovery | DONE | [Acceptance checks and demo](docs/phases/PHASE_00_DISCOVERY.md), [ADR-006](docs/reference/ADR_LOG.md#adr-006--commit-dispatch-eligibility-before-publishing) | — |
-| 01 Foundation | IN PROGRESS | API tests, production web build, Vite HTTP smoke, and offline Compose config validation passed | Live Compose and hosted CI verification pending |
+| 01 Foundation | DONE | Clean source archive passed install, Prisma generation, lint, format, 34 unit tests and build. Hosted CI passed live Compose startup and dependency recovery. [GitHub Actions](https://github.com/Nikhil-X-codes/Job-Observability/actions/runs/44709186444) | — |
 | 02 API & Data | DONE | Migration applied, 5 live PostgreSQL API integration tests passed, and demo seed ran twice | — |
-| 03 Queue & Workers | DONE | Two native workers processed jobs. Pre-ACK redelivery and dispatch recovery preserved one effect | Compose run tracked in Phase 01 |
-| 04 Reliability | DONE | Native worker kill/recovery, broker restart, database outage recovery, 5 PostgreSQL failure tests and 7 API tests passed | Compose runtime tracked in Phase 01 |
+| 03 Queue & Workers | DONE | Two native workers processed jobs. Pre-ACK redelivery and dispatch recovery preserved one effect. Broker suite passed in hosted Compose | — |
+| 04 Reliability | DONE | Native worker kill/recovery, broker restart, database outage recovery, 5 PostgreSQL failure tests and 7 API tests passed. Hosted integration suite passed | — |
 | 05 Dashboard | DONE | [Chrome smoke](tests/ui/smoke.mjs) and [dashboard screenshot](docs/assets/jobflow-overview.png) | — |
-| 06 Observability | DONE | Native Prometheus scraped four processes and matched PostgreSQL completion counts. Grafana returned live rate and p95 queries. [Rendered dashboard](docs/assets/jobflow-grafana.png) | Compose runtime tracked in Phase 01 |
+| 06 Observability | DONE | Native Prometheus scraped four processes and matched PostgreSQL completion counts. Grafana returned live rate and p95 queries. [Rendered dashboard](docs/assets/jobflow-grafana.png) | — |
 | 07 Benchmarks | DONE | 12 measured runs at 1, 2, 4, and 8 workers. All 5,410 accepted jobs completed after drain. [Report and per-run data](benchmarks/results/2026-11-20-native-mixed/REPORT.md) | Fixed-rate scaling evidence. Saturation and repeated fault-timing measurements remain open |
 | 08 AWS Release | DEFERRED | Offline production Compose verification exposed only web ports 80 and 443 | Final release stage, account, region, and budget |
-| 09 Portfolio | IN PROGRESS | Verified 2:17 [operator walkthrough](docs/assets/jobflow-demo.webm), screenshots, and [measured benchmark evidence](benchmarks/results/2026-11-20-native-mixed/REPORT.md) | Publication to the selected GitHub repository remains pending |
+| 09 Portfolio | DONE | Public source, green hosted CI, verified 2:17 [operator walkthrough](docs/assets/jobflow-demo.webm), screenshots, and [benchmark evidence](benchmarks/results/2026-11-20-native-mixed/REPORT.md) | Optional hosted demo is tracked in Phase 08 |
 
 ## Decisions
 
@@ -91,7 +91,13 @@
 - **Commands and results** — `npm run lint`, `npm run format:check`, and `npm run test:unit` (34 tests) passed before the measured run. The reserved native fixture ran `scripts/run-benchmark.mjs` at commit `fd07243022952964c3d20055df66778754c9a8ef` and exited 0. All 12 measured cohorts passed k6 admission thresholds and PostgreSQL reconciliation.
 - **Acceptance evidence** — All 5,410 jobs completed after drain and 5,185 completed within the throughput windows. PostgreSQL found zero duplicate or missing effects and zero unfinished jobs. The report records the host, workload, windows, retries, latencies, and per-run Prometheus samples. [Benchmark report](benchmarks/results/2026-11-20-native-mixed/REPORT.md)
 - **Portfolio verification** — `node tests/ui/smoke.mjs` in recording mode exited 0 with fresh native PostgreSQL and RabbitMQ services. The browser showed a real worker claim, forced exit, retry and completion. The test asserted one database effect and exercised linked replay, reconnect, and mobile layout. Extracted frames confirmed the retry history and Grafana ending in the 2:17 WebM. [Operator walkthrough](docs/assets/jobflow-demo.webm)
-- **Open issues and risks** — Saturation and recovery timing require separate studies. The GitHub target is public and had no commits at verification. Live Compose, hosted CI, and AWS remain pending.
+- **Open issues and risks** — Saturation, burst behavior, and repeated recovery timing require separate studies. AWS remains deferred.
+
+## GitHub publication handoff — 2026-11-20
+
+- **Phase** — Phases 01 and 09.
+- **Commands and results** — From a fresh Git archive of `c8afaca`, dependency installation, Prisma generation, lint, formatting, all 34 unit tests, and the production build passed. `git push --set-upstream origin main` published that commit and the remote SHA matched. [Public repository](https://github.com/Nikhil-X-codes/Job-Observability)
+- **Acceptance evidence** — GitHub Actions passed the full CI job on `c8afaca`, including `npm run test:integration`. That command started the Compose stack, exercised dependency outages and recovery, and ran the broker, API and failure suites. [Hosted run](https://github.com/Nikhil-X-codes/Job-Observability/actions/runs/44709186444)
 
 ## Session handoff — 2026-11-20
 
