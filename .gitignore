@@ -1,0 +1,9 @@
+node_modules/
+.npm-cache/
+coverage/
+dist/
+packages/db/generated/
+benchmarks/results/local/
+.env
+.env.*
+!.env.example

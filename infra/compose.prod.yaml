@@ -1,0 +1,90 @@
+x-prod-process: &prod-process
+  restart: unless-stopped
+  mem_limit: 384m
+  networks: [backend]
+  logging: &rotated-logs
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: "3"
+  environment: &production-connections
+    DATABASE_URL: "${DATABASE_URL:?Set the production PostgreSQL connection URL}"
+    AMQP_URL: "${AMQP_URL:?Set the production AMQP connection URL}"
+
+services:
+  postgres:
+    restart: unless-stopped
+    mem_limit: 768m
+    networks: [backend]
+    logging: *rotated-logs
+    ports: !reset []
+    environment:
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Set a unique database password}"
+
+  rabbitmq:
+    restart: unless-stopped
+    mem_limit: 768m
+    networks: [backend]
+    logging: *rotated-logs
+    ports: !reset []
+    environment:
+      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_PASSWORD:?Set a unique broker password}"
+
+  migrate:
+    image: "jobflow-migrate:${JOBFLOW_RELEASE_TAG:-local}"
+    networks: [backend]
+    environment:
+      DATABASE_URL: "${DATABASE_URL:?Set the production PostgreSQL connection URL}"
+
+  api:
+    <<: *prod-process
+    image: "jobflow-api:${JOBFLOW_RELEASE_TAG:-local}"
+    ports: !reset []
+    environment:
+      <<: *production-connections
+      APP_ORIGIN: "https://${JOBFLOW_DOMAIN:?Set the HTTPS domain}"
+      TRUST_PROXY_HOPS: "1"
+      WRITE_RATE_LIMIT: "60"
+
+  dispatcher:
+    <<: *prod-process
+    image: "jobflow-processing:${JOBFLOW_RELEASE_TAG:-local}"
+  worker:
+    <<: *prod-process
+    image: "jobflow-processing:${JOBFLOW_RELEASE_TAG:-local}"
+  scheduler:
+    <<: *prod-process
+    image: "jobflow-processing:${JOBFLOW_RELEASE_TAG:-local}"
+
+  web:
+    image: "jobflow-web:${JOBFLOW_RELEASE_TAG:-local}"
+    restart: unless-stopped
+    mem_limit: 192m
+    logging: *rotated-logs
+    networks: [edge, backend]
+    ports: !override ["80:80", "443:443"]
+    environment:
+      JOBFLOW_DOMAIN: "${JOBFLOW_DOMAIN:?Set the HTTPS domain}"
+    volumes:
+      - ./caddy/Caddyfile.prod:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+  prometheus:
+    networks: [backend]
+    ports: !reset []
+
+  grafana:
+    networks: [backend]
+    ports: !reset []
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: "${GRAFANA_PASSWORD:-}"
+
+volumes:
+  caddy-data:
+  caddy-config:
+
+networks:
+  edge:
+  backend:
+    internal: true

@@ -1,0 +1,13 @@
+{
+  "name": "@jobflow/db",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/client.js",
+    "./processing": "./src/processing.js"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "7.10.1",
+    "@prisma/client": "7.10.1"
+  }
+}

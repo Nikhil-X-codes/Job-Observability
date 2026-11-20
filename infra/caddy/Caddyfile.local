@@ -1,0 +1,21 @@
+{
+	admin off
+}
+
+:8080 {
+	@metrics path /metrics /metrics/*
+	handle @metrics {
+		respond 404
+	}
+
+	@api path /health/* /api/* /socket.io/*
+	handle @api {
+		reverse_proxy api:3000
+	}
+
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}

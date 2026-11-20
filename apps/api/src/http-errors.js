@@ -1,0 +1,17 @@
+export class HttpError extends Error {
+  constructor(status, code, message) {
+    super(message);
+    this.status = status;
+    this.code = code;
+  }
+}
+
+export function sendError(response, status, code, message) {
+  response.status(status).json({
+    error: {
+      code,
+      message,
+      requestId: response.getHeader("X-Request-Id"),
+    },
+  });
+}

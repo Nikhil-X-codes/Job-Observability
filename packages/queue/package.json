@@ -1,0 +1,16 @@
+{
+  "name": "@jobflow/queue",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/broker.js",
+    "./service": "./src/service.js"
+  },
+  "dependencies": {
+    "@jobflow/db": "*",
+    "@jobflow/telemetry": "*",
+    "amqplib": "2.4.0",
+    "pino": "10.4.0",
+    "zod": "4.6.7"
+  }
+}

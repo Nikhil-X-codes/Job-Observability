@@ -1,0 +1,442 @@
+{
+  "uid": "jobflow-operations",
+  "title": "JobFlow Operations",
+  "tags": ["jobflow"],
+  "editable": false,
+  "schemaVersion": 41,
+  "version": 1,
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "refresh": "15s",
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "name": "Annotations & Alerts",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "type": "dashboard",
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Completed jobs per second",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "jobflow-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(jobs_terminal_total{status=\"COMPLETED\"}[5m]))",
+          "legendFormat": "Completed jobs per second",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "jobflow-prometheus"
+          }
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Terminal success and attempt failure",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "jobflow-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(jobs_terminal_total{status=\"COMPLETED\"}[5m])) / sum(rate(jobs_terminal_total{status=~\"COMPLETED|DEAD\"}[5m]))",
+          "legendFormat": "Terminal success",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "jobflow-prometheus"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "sum(rate(job_attempts_total{outcome=\"FAILED\"}[5m])) / sum(rate(job_attempts_total[5m]))",
+          "legendFormat": "Attempt failure",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "jobflow-prometheus"
+          }
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "p95 execution duration",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "jobflow-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(job_execution_duration_seconds_bucket{outcome=\"SUCCEEDED\"}[5m])))",
+          "legendFormat": "p95 execution duration",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "jobflow-prometheus"
+          }
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "p95 end-to-end duration",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "jobflow-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(job_end_to_end_duration_seconds_bucket{status=~\"COMPLETED|DEAD\"}[5m])))",
+          "legendFormat": "p95 end-to-end duration",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "jobflow-prometheus"
+          }
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "p95 queue wait",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "jobflow-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(job_queue_wait_seconds_bucket[5m])))",
+          "legendFormat": "p95 queue wait",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "jobflow-prometheus"
+          }
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Job states and dead letters",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "jobflow-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "job_state_count",
+          "legendFormat": "{{status}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "jobflow-prometheus"
+          }
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Retries and expired leases per minute",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "jobflow-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 24,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(job_retries_total[5m])) * 60",
+          "legendFormat": "Retries",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "jobflow-prometheus"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "sum(rate(worker_lease_expirations_total[5m])) * 60",
+          "legendFormat": "Lease expirations",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "jobflow-prometheus"
+          }
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Active worker consumers and jobs",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "jobflow-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 24,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(worker_connected)",
+          "legendFormat": "Connected workers",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "jobflow-prometheus"
+          }
+        },
+        {
+          "refId": "B",
+          "expr": "sum(worker_active_jobs)",
+          "legendFormat": "Active jobs",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "jobflow-prometheus"
+          }
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Pending outbox intents",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "jobflow-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 32,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "outbox_pending_count",
+          "legendFormat": "Pending outbox intents",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "jobflow-prometheus"
+          }
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "Age of oldest due intent",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "jobflow-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 32,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "outbox_oldest_due_seconds",
+          "legendFormat": "Age of oldest due intent",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "jobflow-prometheus"
+          }
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "title": "Process CPU cores",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "jobflow-prometheus"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 40,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "rate(jobflow_process_cpu_seconds_total[5m])",
+          "legendFormat": "{{job}} {{instance}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "jobflow-prometheus"
+          }
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "title": "Process resident memory",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "jobflow-prometheus"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 40,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "jobflow_process_resident_memory_bytes",
+          "legendFormat": "{{job}} {{instance}}",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "jobflow-prometheus"
+          }
+        }
+      ]
+    }
+  ]
+}

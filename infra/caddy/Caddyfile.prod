@@ -1,0 +1,27 @@
+{
+	admin off
+}
+
+{$JOBFLOW_DOMAIN} {
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "same-origin"
+	}
+
+	@private path /metrics /metrics/* /health/*
+	handle @private {
+		respond 404
+	}
+
+	@api path /api/* /socket.io/*
+	handle @api {
+		reverse_proxy api:3000
+	}
+
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}

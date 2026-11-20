@@ -1,0 +1,35 @@
+name: Deploy JobFlow
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jobflow-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    runs-on: [self-hosted, linux, jobflow-release]
+    timeout-minutes: 25
+    env:
+      JOBFLOW_RELEASE_TAG: ${{ github.sha }}
+      JOBFLOW_PRODUCTION_ENV_FILE: ${{ vars.JOBFLOW_PRODUCTION_ENV_FILE }}
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build and deploy the approved commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$JOBFLOW_PRODUCTION_ENV_FILE"
+          test -r "$JOBFLOW_PRODUCTION_ENV_FILE"
+          compose=(docker compose --env-file "$JOBFLOW_PRODUCTION_ENV_FILE" -p jobflow-prod -f infra/compose.yaml -f infra/compose.prod.yaml)
+          "${compose[@]}" config --quiet
+          "${compose[@]}" up -d --build --wait --wait-timeout 180
+          "${compose[@]}" exec -T api node -e "fetch('http://127.0.0.1:3000/health/ready', {signal: AbortSignal.timeout(5000)}).then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))"

@@ -1,0 +1,11 @@
+.npm-cache/
+coverage/
+dist/
+node_modules/
+packages/db/generated/
+benchmarks/REPORT_TEMPLATE.md
+benchmarks/results/local/
+docs/
+AGENTS.md
+README.md
+PROJECT_TRACKER.md

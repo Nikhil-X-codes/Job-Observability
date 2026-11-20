@@ -1,0 +1,9 @@
+{
+  "name": "@jobflow/dispatcher",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@jobflow/db": "*",
+    "@jobflow/queue": "*"
+  }
+}

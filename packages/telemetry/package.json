@@ -1,0 +1,9 @@
+{
+  "name": "@jobflow/telemetry",
+  "private": true,
+  "type": "module",
+  "exports": "./src/metrics.js",
+  "dependencies": {
+    "prom-client": "15.1.3"
+  }
+}

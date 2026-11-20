@@ -1,0 +1,49 @@
+{
+  "name": "jobflow",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "^26.0.0"
+  },
+  "overrides": {
+    "@prisma/config": {
+      "effect": "3.22.1"
+    }
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "services/*"
+  ],
+  "scripts": {
+    "dev:api": "node --watch --env-file-if-exists=.env apps/api/src/server.js",
+    "dev:web": "npm run dev --workspace @jobflow/web",
+    "dev:dispatcher": "node --env-file-if-exists=.env services/dispatcher/src/main.js",
+    "dev:worker": "node --env-file-if-exists=.env services/worker/src/main.js",
+    "dev:scheduler": "node --env-file-if-exists=.env services/scheduler/src/main.js",
+    "build": "npm run build --workspace @jobflow/web",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
+    "db:seed": "node --env-file-if-exists=.env scripts/seed.mjs",
+    "lint": "eslint .",
+    "format:check": "prettier --check .",
+    "test:unit": "vitest run apps packages services scripts",
+    "test:api-integration": "vitest run tests/integration",
+    "test:broker": "vitest run tests/broker",
+    "test:failure": "vitest run tests/failure",
+    "test:ui": "node tests/ui/smoke.mjs",
+    "test:observability": "node tests/native/observability.mjs",
+    "test:load": "node --env-file-if-exists=.env scripts/run-benchmark.mjs",
+    "test:integration": "node scripts/verify-compose.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint": "10.15.0",
+    "globals": "17.14.0",
+    "playwright": "1.65.1",
+    "prettier": "3.10.1",
+    "prisma": "7.10.1",
+    "supertest": "7.3.2",
+    "vitest": "5.1.1"
+  }
+}

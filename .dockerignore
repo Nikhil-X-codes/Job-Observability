@@ -1,0 +1,9 @@
+.git
+.github
+.npm-cache
+**/node_modules
+**/dist
+**/coverage
+**/.env
+**/.env.*
+packages/db/generated
