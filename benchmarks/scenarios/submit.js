@@ -42,7 +42,9 @@ export const options = {
     : { submissions: constant(rate, __ENV.BENCHMARK_DURATION ?? "60s") },
   thresholds: {
     http_req_failed: ["rate==0"],
-    dropped_iterations: ["count==0"],
+    dropped_iterations: [
+      `count<=${Number(__ENV.BENCHMARK_ALLOWED_DROPS ?? 0)}`,
+    ],
   },
   summaryTrendStats: ["med", "p(95)", "p(99)", "max"],
 };

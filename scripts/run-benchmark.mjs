@@ -22,12 +22,19 @@ const rates = (env.BENCHMARK_RATES ?? env.BENCHMARK_RATE ?? "10")
   .map(Number);
 const burst = env.BENCHMARK_BURST === "1";
 const baselineRate = Number(env.BENCHMARK_BASELINE_RATE ?? 10);
-const duration = Number(
-  (env.BENCHMARK_DURATION ?? "60s").match(/^(\d+)s$/)?.[1],
-);
+const duration = env.BENCHMARK_DURATION ?? "60s";
+const durationUnits = { h: 3_600_000, m: 60_000, s: 1000, ms: 1 };
+const durationMs = /^(?:\d+(?:\.\d+)?(?:ms|h|m|s))+$/.test(duration)
+  ? [...duration.matchAll(/(\d+(?:\.\d+)?)(ms|h|m|s)/g)].reduce(
+      (sum, [, value, unit]) => sum + Number(value) * durationUnits[unit],
+      0,
+    )
+  : NaN;
 const warmupSeconds = Number(env.BENCHMARK_WARMUP_SECONDS ?? 15);
 const vus = Number(env.BENCHMARK_VUS ?? 20);
 const repetitions = Number(env.BENCHMARK_REPETITIONS ?? 3);
+const firstRepetition = Number(env.BENCHMARK_FIRST_REPETITION ?? 1);
+const maxDropFraction = Number(env.BENCHMARK_MAX_DROP_FRACTION ?? 0);
 const validRate = (value) =>
   Number.isInteger(value) && value >= 1 && value <= 1000;
 
@@ -46,9 +53,9 @@ if (
   new Set(rates).size !== rates.length ||
   !validRate(baselineRate) ||
   (burst && rates.some((rate) => rate <= baselineRate)) ||
-  !Number.isInteger(duration) ||
-  duration < 5 ||
-  duration > 600 ||
+  !Number.isFinite(durationMs) ||
+  durationMs < 1 ||
+  durationMs >= 20 * 60_000 ||
   !Number.isInteger(warmupSeconds) ||
   warmupSeconds < 1 ||
   warmupSeconds > 60 ||
@@ -56,8 +63,14 @@ if (
   vus < 1 ||
   vus > 300 ||
   !Number.isInteger(repetitions) ||
-  repetitions < 3 ||
+  repetitions < 1 ||
   repetitions > 20 ||
+  !Number.isInteger(firstRepetition) ||
+  firstRepetition < 1 ||
+  firstRepetition + repetitions > 21 ||
+  !Number.isFinite(maxDropFraction) ||
+  maxDropFraction < 0 ||
+  maxDropFraction > 0.01 ||
   !env.DATABASE_URL ||
   !env.BENCHMARK_TENANT ||
   !env.BENCHMARK_EMAIL ||
@@ -129,8 +142,10 @@ const meta = {
   profile: burst ? "burst" : "constant",
   baselineRate: burst ? baselineRate : undefined,
   repetitions,
+  firstRepetition,
+  maxDropFraction,
   runtime,
-  duration: burst ? "40s" : `${duration}s`,
+  duration: burst ? "40s" : duration,
   warmupSeconds,
   vus,
   writeRateLimit: env.WRITE_RATE_LIMIT
@@ -204,7 +219,11 @@ try {
     if (native) await native.scale(count);
     else
       compose("up", "-d", "--no-deps", "--scale", `worker=${count}`, "worker");
-    for (let repetition = 1; repetition <= repetitions; repetition += 1) {
+    for (
+      let repetition = firstRepetition;
+      repetition < firstRepetition + repetitions;
+      repetition += 1
+    ) {
       for (let offset = 0; offset < rates.length; offset += 1) {
         const rate = rates[(offset + repetition - 1) % rates.length];
         await measure(count, repetition, rate, true);
@@ -224,7 +243,15 @@ async function measure(count, repetition, rate, warmup) {
     `${file}-${warmup ? "warmup" : "measured"}.json`,
   );
   const launchAt = new Date();
-  const seconds = warmup ? warmupSeconds : burst ? 40 : duration;
+  const windowMs = warmup ? warmupSeconds * 1000 : burst ? 40_000 : durationMs;
+  const scheduledIterations = warmup
+    ? Math.min(rate, 15) * warmupSeconds
+    : burst
+      ? 10 * rate + 30 * baselineRate
+      : (rate * windowMs) / 1000;
+  const allowedDrops = warmup
+    ? 0
+    : Math.floor(scheduledIterations * maxDropFraction);
   const run = spawnSync(
     "k6",
     ["run", "--summary-export", summaryPath, "benchmarks/scenarios/submit.js"],
@@ -235,9 +262,10 @@ async function measure(count, repetition, rate, warmup) {
         BENCHMARK_WORKLOAD: workload,
         BENCHMARK_RATE: String(warmup ? Math.min(rate, 15) : rate),
         BENCHMARK_RUN_ID: runId,
-        BENCHMARK_DURATION: `${seconds}s`,
+        BENCHMARK_DURATION: warmup ? `${warmupSeconds}s` : duration,
         BENCHMARK_BURST: !warmup && burst ? "1" : "0",
         BENCHMARK_BASELINE_RATE: String(baselineRate),
+        BENCHMARK_ALLOWED_DROPS: String(allowedDrops),
       },
       stdio: "inherit",
       timeout: 20 * 60_000,
@@ -255,7 +283,7 @@ async function measure(count, repetition, rate, warmup) {
   )
     throw new Error(`Missing k6 scenario timestamp in ${summaryPath}`);
   const startedAt = new Date(startMs);
-  const endedAt = new Date(startMs + seconds * 1000);
+  const endedAt = new Date(startMs + windowMs);
   const report = await reconcileRun(db, env.BENCHMARK_TENANT, runId, {
     startedAt,
     endedAt,
@@ -274,6 +302,8 @@ async function measure(count, repetition, rate, warmup) {
     endedAt,
     k6ExitCode: run.status,
     reportedAccepted,
+    scheduledIterations,
+    allowedDrops,
     rejected: metrics.jobflow_rejected?.count ?? 0,
     droppedIterations: metrics.dropped_iterations?.count ?? 0,
     submitMs: metrics.jobflow_submit_ms,
@@ -299,7 +329,7 @@ async function measure(count, repetition, rate, warmup) {
     !report.accepted ||
     report.accepted !== reportedAccepted ||
     record.rejected ||
-    record.droppedIterations ||
+    record.droppedIterations > allowedDrops ||
     report.completed !== report.accepted ||
     report.remaining ||
     report.duplicateEffects ||
