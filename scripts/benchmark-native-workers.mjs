@@ -40,10 +40,10 @@ export function nativeWorkerGroup(env) {
       }
     }
   }
-  async function stop() {
+  async function stop(signal) {
     const stopping = started;
     started = [];
-    for (const { child } of stopping) child.kill();
+    for (const { child } of stopping) child.kill(signal);
     await Promise.allSettled(stopping.map(({ exited }) => exited));
     await setTargets([]);
   }

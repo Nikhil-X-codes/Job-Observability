@@ -1,6 +1,6 @@
 import { setTimeout as delay } from "node:timers/promises";
 
-function percentiles(values) {
+export function percentiles(values) {
   const ordered = values.filter(Number.isFinite).toSorted((a, b) => a - b);
   return Object.fromEntries(
     [50, 95, 99].map((p) => [
@@ -38,6 +38,10 @@ export async function reconcileRun(
       createdAt: true,
       finishedAt: true,
       attemptNumber: true,
+      attempts: {
+        where: { attemptNo: 1 },
+        select: { startedAt: true },
+      },
     },
   });
   const attempts = await db.attempt.findMany({
@@ -57,8 +61,9 @@ export async function reconcileRun(
     ({ outcome }) => outcome === "FAILED",
   ).length;
   const completedInWindow = completed.filter(
-    ({ finishedAt }) => finishedAt >= startedAt && finishedAt <= endedAt,
+    ({ finishedAt }) => finishedAt >= startedAt && finishedAt < endedAt,
   ).length;
+  const backlog = backlogProfile(jobs, startedAt, endedAt);
   const elapsedSeconds = (endedAt - startedAt) / 1000;
   const jobsWithEffects = new Set(effects.map(({ jobId }) => jobId));
   return {
@@ -70,6 +75,7 @@ export async function reconcileRun(
     completedInWindow,
     observedWindowSeconds: elapsedSeconds,
     completionsPerSecond: completedInWindow / elapsedSeconds,
+    ...backlog,
     retried: jobs.filter(({ attemptNumber }) => attemptNumber > 1).length,
     failedAttempts,
     totalFinishedAttempts: attempts.length,
@@ -88,8 +94,72 @@ export async function reconcileRun(
       ({ id }) => !jobsWithEffects.has(id),
     ).length,
     executionMs: percentiles(attempts.map(({ durationMs }) => durationMs)),
+    firstClaimMs: percentiles(
+      jobs
+        .filter(({ attempts }) => attempts?.length)
+        .map(({ createdAt, attempts }) => attempts[0].startedAt - createdAt),
+    ),
     endToEndMs: percentiles(
       finished.map(({ finishedAt, createdAt }) => finishedAt - createdAt),
     ),
+  };
+}
+
+function backlogProfile(jobs, startedAt, endedAt) {
+  const changes = new Map();
+  function change(at, key) {
+    const timestamp = at.getTime();
+    const counts = changes.get(timestamp) ?? { arrivals: 0, departures: 0 };
+    counts[key]++;
+    changes.set(timestamp, counts);
+  }
+  for (const job of jobs) {
+    change(job.createdAt, "arrivals");
+    if (job.finishedAt) change(job.finishedAt, "departures");
+  }
+  const events = [...changes].sort(([left], [right]) => left - right);
+  const end = endedAt.getTime();
+  let active = 0;
+  let peakBacklog = 0;
+  let peakBacklogInWindow = 0;
+  let backlogAtWindowEnd = 0;
+  let drainMs = 0;
+  const seconds = [];
+  let index = 0;
+  const last = Math.max(end, events.at(-1)?.[0] ?? end);
+  for (
+    let time = startedAt.getTime() + 1000;
+    time <= last + 1000;
+    time += 1000
+  ) {
+    let accepted = 0;
+    let settled = 0;
+    while (index < events.length && events[index][0] < time) {
+      const [at, { arrivals, departures }] = events[index++];
+      active += arrivals - departures;
+      accepted += arrivals;
+      settled += departures;
+      peakBacklog = Math.max(peakBacklog, active);
+      if (at < end) {
+        peakBacklogInWindow = Math.max(peakBacklogInWindow, active);
+        backlogAtWindowEnd = active;
+      } else if (departures) {
+        drainMs = at - end;
+      }
+    }
+    seconds.push({
+      second: (time - startedAt) / 1000,
+      accepted,
+      settled,
+      backlog: active,
+    });
+    if (time >= end && index === events.length) break;
+  }
+  return {
+    peakBacklog,
+    peakBacklogInWindow,
+    backlogAtWindowEnd,
+    drainMs,
+    seconds,
   };
 }

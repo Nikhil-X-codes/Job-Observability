@@ -65,3 +65,47 @@ it("reconciles terminal throughput, remaining jobs, attempts, and effects separa
     endToEndMs: { p50: 500, p95: 500, p99: 500 },
   });
 });
+
+it("measures burst backlog and drain relative to the exact arrival window", async () => {
+  const startedAt = new Date(1000);
+  const endedAt = new Date(3000);
+  const db = {
+    job: {
+      findMany: async () =>
+        [
+          ["finished-before", 1000, 2800],
+          ["unfinished-at-cutoff", 2000, 3100],
+          ["late-admission", 3100, 4700],
+        ].map(([id, admitted, completed]) => ({
+          id,
+          status: "COMPLETED",
+          createdAt: new Date(admitted),
+          finishedAt: new Date(completed),
+          attemptNumber: 1,
+          attempts: [{ startedAt: new Date(admitted + 300) }],
+        })),
+    },
+    attempt: { findMany: async () => [] },
+    businessEffect: { groupBy: async () => [] },
+  };
+  expect(
+    await reconcileRun(db, "demo", "cutoff", {
+      startedAt,
+      endedAt,
+      drainMs: 0,
+    }),
+  ).toMatchObject({
+    completedInWindow: 1,
+    peakBacklog: 2,
+    peakBacklogInWindow: 2,
+    backlogAtWindowEnd: 1,
+    drainMs: 1700,
+    firstClaimMs: { p50: 300, p95: 300, p99: 300 },
+    seconds: [
+      { second: 1, accepted: 1, settled: 0, backlog: 1 },
+      { second: 2, accepted: 1, settled: 1, backlog: 1 },
+      { second: 3, accepted: 1, settled: 1, backlog: 1 },
+      { second: 4, accepted: 0, settled: 1, backlog: 0 },
+    ],
+  });
+});
