@@ -1,6 +1,6 @@
 # Phase 09 — Portfolio packaging & interview prep
 
-**Status:** Published with green hosted CI, a verified 2:17 walkthrough, a rendered Grafana screenshot, and measured performance evidence. [Public repository](https://github.com/Nikhil-X-codes/Job-Observability) · [Walkthrough](../assets/jobflow-demo.webm) · [Benchmark report](../../benchmarks/results/2026-11-20-native-mixed/REPORT.md)
+**Status:** Published with green hosted CI, a verified 2:22 walkthrough, a rendered Grafana screenshot, and measured performance evidence. [Public repository](https://github.com/Nikhil-X-codes/Job-Observability) · [Walkthrough](../assets/jobflow-demo.webm) · [Benchmark report](../../benchmarks/results/2026-11-20-native-mixed/REPORT.md)
 
 ## Goal
 

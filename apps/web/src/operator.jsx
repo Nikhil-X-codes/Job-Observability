@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Bar,
   BarChart,
   CartesianGrid,
+  Cell,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -12,12 +13,25 @@ import {
 import { api, label, showTime, useApi } from "./api.js";
 import { Pager, ResourceMessage } from "./jobs.jsx";
 
+const countFormat = new Intl.NumberFormat();
+const formatCount = (value) => countFormat.format(value);
+const statusColors = {
+  PENDING: "#b1bbb3",
+  QUEUED: "#4b799b",
+  RUNNING: "#537d6a",
+  RETRY_WAIT: "#bb813d",
+  COMPLETED: "#297451",
+  DEAD: "#a75549",
+  CANCELLED: "#7c847e",
+};
+
 export function Overview({ revision }) {
   const [refresh, setRefresh] = useState(0);
   const result = useApi("/admin/overview", `${revision}:${refresh}`);
   const data = result.data;
   const jobs = data
     ? Object.entries(data.counts).map(([status, count]) => ({
+        state: status,
         status: label(status),
         count,
       }))
@@ -26,73 +40,121 @@ export function Overview({ revision }) {
     <>
       <div className="heading">
         <h1>Overview</h1>
-        <button onClick={() => setRefresh((value) => value + 1)}>
-          Refresh
-        </button>
+        <div className="row overview-actions">
+          {data && <span className="muted">Updated {showTime(data.at)}</span>}
+          <button onClick={() => setRefresh((value) => value + 1)}>
+            Refresh
+          </button>
+        </div>
       </div>
       <ResourceMessage result={result} />
       {data && (
         <>
-          <div className="cards">
+          <dl className="metric-strip" aria-label="Queue summary">
             {[
-              ["Eligible jobs", data.counts.QUEUED],
+              ["Queued", data.counts.QUEUED],
               ["Running", data.counts.RUNNING],
               ["Completed, last minute", data.completedLastMinute],
               ["Active workers", data.activeWorkers ?? "Unknown"],
             ].map(([title, count]) => (
-              <section className="panel stat" key={title}>
-                <h2>{title}</h2>
-                <strong>{count}</strong>
-              </section>
+              <div key={title}>
+                <dt>{title}</dt>
+                <dd className="tabular">
+                  {typeof count === "number" ? formatCount(count) : count}
+                </dd>
+              </div>
             ))}
+          </dl>
+          <div className="overview-grid">
+            <section className="panel distribution">
+              <div className="heading compact">
+                <h2>Jobs by status</h2>
+                <Link to="/jobs">
+                  View jobs <span aria-hidden="true">→</span>
+                </Link>
+              </div>
+              <div className="chart" aria-hidden="true">
+                <ResponsiveContainer width="100%" height={276}>
+                  <BarChart
+                    data={jobs}
+                    layout="vertical"
+                    margin={{ left: 0, right: 14 }}
+                  >
+                    <CartesianGrid
+                      stroke="#e4e9e4"
+                      strokeDasharray="3 3"
+                      horizontal={false}
+                    />
+                    <XAxis
+                      type="number"
+                      allowDecimals={false}
+                      stroke="#55635a"
+                      tickLine={false}
+                      axisLine={false}
+                      fontSize={11}
+                    />
+                    <YAxis
+                      dataKey="status"
+                      type="category"
+                      width={80}
+                      stroke="#34453b"
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <Tooltip
+                      cursor={{ fill: "#edf3ef" }}
+                      contentStyle={{
+                        background: "#fff",
+                        borderColor: "#d9e2da",
+                        color: "#14251e",
+                      }}
+                    />
+                    <Bar
+                      dataKey="count"
+                      name="Jobs"
+                      radius={[0, 3, 3, 0]}
+                      barSize={14}
+                      isAnimationActive={false}
+                    >
+                      {jobs.map(({ state }) => (
+                        <Cell key={state} fill={statusColors[state]} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <dl className="sr-only">
+                {jobs.map(({ status, count }) => (
+                  <div key={status}>
+                    <dt>{status}</dt>
+                    <dd>{formatCount(count)}</dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
+            <section className="panel attention">
+              <h2>Needs attention</h2>
+              <Link to="/dead-letters">
+                <span>
+                  <strong>Dead letters</strong>
+                  <small>Jobs that ended in failure</small>
+                </span>
+                <strong className="tabular attention-failed">
+                  {formatCount(data.counts.DEAD)}
+                </strong>
+              </Link>
+              <Link to="/jobs?status=RETRY_WAIT">
+                <span>
+                  <strong>Waiting to retry</strong>
+                  <small>Jobs scheduled for another attempt</small>
+                </span>
+                <strong className="tabular attention-retry">
+                  {formatCount(data.counts.RETRY_WAIT)}
+                </strong>
+              </Link>
+            </section>
           </div>
-          <section className="panel">
-            <div className="heading compact">
-              <h2>Jobs by status</h2>
-              <span className="muted">Updated {showTime(data.at)}</span>
-            </div>
-            <div className="chart" aria-hidden="true">
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart
-                  data={jobs}
-                  layout="vertical"
-                  margin={{ left: 16, right: 12 }}
-                >
-                  <CartesianGrid stroke="#24364b" horizontal={false} />
-                  <XAxis type="number" allowDecimals={false} stroke="#a8bdd2" />
-                  <YAxis
-                    dataKey="status"
-                    type="category"
-                    width={85}
-                    stroke="#a8bdd2"
-                  />
-                  <Tooltip
-                    cursor={{ fill: "#213449" }}
-                    contentStyle={{
-                      background: "#132338",
-                      borderColor: "#36506c",
-                      color: "#e7f3fc",
-                    }}
-                  />
-                  <Bar
-                    dataKey="count"
-                    name="Jobs"
-                    fill="#75d7ff"
-                    radius={4}
-                    isAnimationActive={false}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-            <dl className="count-summary">
-              {jobs.map(({ status, count }) => (
-                <div key={status}>
-                  <dt>{status}</dt>
-                  <dd>{count}</dd>
-                </div>
-              ))}
-            </dl>
-          </section>
         </>
       )}
     </>
@@ -104,11 +166,15 @@ export function DeadLetters({ revision }) {
   const [selected, setSelected] = useState(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
+  const dialog = useRef(null);
   const navigate = useNavigate();
   const query = new URLSearchParams(
     cursors.at(-1) ? { cursor: cursors.at(-1) } : {},
   );
   const result = useApi(`/admin/dlq?${query}`, revision);
+  useEffect(() => {
+    if (selected && !dialog.current.open) dialog.current.showModal();
+  }, [selected]);
   async function replay(event) {
     event.preventDefault();
     setPending(true);
@@ -128,7 +194,7 @@ export function DeadLetters({ revision }) {
   return (
     <>
       <h1>Dead letters</h1>
-      <section className="panel">
+      <section className="panel table-panel" aria-label="Dead-letter list">
         <ResourceMessage
           result={result}
           empty={result.data?.items.length === 0 ? "No dead letters." : ""}
@@ -140,7 +206,9 @@ export function DeadLetters({ revision }) {
                 <tr>
                   <th scope="col">Job</th>
                   <th scope="col">Last error</th>
-                  <th scope="col">Recorded</th>
+                  <th className="date-column" scope="col">
+                    Recorded
+                  </th>
                   <th scope="col">Action</th>
                 </tr>
               </thead>
@@ -148,12 +216,14 @@ export function DeadLetters({ revision }) {
                 {result.data.items.map((entry) => (
                   <tr key={entry.id}>
                     <td>
-                      <Link to={`/jobs/${entry.jobId}`}>
+                      <Link className="record-id" to={`/jobs/${entry.jobId}`}>
                         {entry.jobId.slice(0, 8)}
                       </Link>
                     </td>
                     <td>{label(entry.lastErrorCode)}</td>
-                    <td>{showTime(entry.createdAt)}</td>
+                    <td className="date-column muted tabular">
+                      {showTime(entry.createdAt)}
+                    </td>
                     <td>
                       {entry.replayJobId ? (
                         <Link to={`/jobs/${entry.replayJobId}`}>
@@ -183,37 +253,47 @@ export function DeadLetters({ revision }) {
         />
       </section>
       {selected && (
-        <form className="panel form wide-form" onSubmit={replay}>
-          <h2>Confirm replay</h2>
-          <p>Create a new run for job {selected.jobId.slice(0, 8)}.</p>
-          <label>
-            Reason{" "}
-            <textarea
-              name="reason"
-              required
-              minLength={1}
-              maxLength={200}
-              rows={3}
-            />
-          </label>
-          {error && (
-            <p className="error" role="alert">
-              {error}
-            </p>
-          )}
-          <div className="row">
-            <button className="primary" disabled={pending}>
-              Confirm replay
-            </button>
-            <button
-              type="button"
-              disabled={pending}
-              onClick={() => setSelected(null)}
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
+        <dialog
+          ref={dialog}
+          aria-labelledby="replay-title"
+          onClose={() => setSelected(null)}
+          onCancel={(event) => {
+            if (pending) event.preventDefault();
+          }}
+        >
+          <form className="form" onSubmit={replay}>
+            <h2 id="replay-title">Replay job</h2>
+            <p>Create a new run for job {selected.jobId.slice(0, 8)}.</p>
+            <label>
+              Reason{" "}
+              <textarea
+                name="reason"
+                autoFocus
+                required
+                minLength={1}
+                maxLength={200}
+                rows={3}
+              />
+            </label>
+            {error && (
+              <p className="error" role="alert">
+                {error}
+              </p>
+            )}
+            <div className="row dialog-actions">
+              <button
+                type="button"
+                disabled={pending}
+                onClick={() => dialog.current.close()}
+              >
+                Cancel
+              </button>
+              <button className="primary" disabled={pending}>
+                {pending ? "Replaying…" : "Confirm replay"}
+              </button>
+            </div>
+          </form>
+        </dialog>
       )}
     </>
   );

@@ -43,7 +43,7 @@ Open `http://127.0.0.1:5173` for the dashboard. The API listens at `http://127.0
 
 Compose runs the Prisma migration before starting the API. To seed the demo, copy `.env.example` to `.env` if needed, set `SEED_ADMIN_PASSWORD` to a unique password of at least 16 characters, then run `npm ci`, `npm run db:generate`, and `npm run db:seed`. The default tenant is `demo` and the default email is `operator@example.test`. Rerunning the seed preserves the existing password and reuses the three sample jobs.
 
-The dashboard shows tenant jobs, attempt history, and administrator replay. The 2:17 local walkthrough includes a forced worker exit, retry and recovery, dead-letter replay, and Grafana. [Dashboard screenshot](docs/assets/jobflow-overview.png) · [Recorded walkthrough](docs/assets/jobflow-demo.webm)
+The dashboard shows tenant jobs, attempt history, and administrator replay. The 2:22 local walkthrough includes a forced worker exit, retry and recovery, dead-letter replay, and Grafana. [Dashboard screenshot](docs/assets/jobflow-overview.png) · [Recorded walkthrough](docs/assets/jobflow-demo.webm)
 
 ## Run the API locally
 
@@ -78,6 +78,8 @@ Enable local Prometheus and Grafana with the `observability` Compose profile. Op
 The native monitoring smoke boots the API, dispatcher, worker, scheduler, Prometheus, and Grafana for a disposable database and broker. Run `npm run test:observability` with `TEST_DATABASE_URL`, `TEST_AMQP_URL`, `PROMETHEUS_EXECUTABLE_PATH`, and `GRAFANA_HOME`. Set `TEST_GRAFANA_DATABASE_URL` to use a separate disposable PostgreSQL database for Grafana metadata. To capture a screenshot, also set `JOBFLOW_GRAFANA_SCREENSHOT` and configure Playwright Chromium.
 
 The native worker-scaling benchmark completed all 5,410 accepted jobs across 12 measured runs at a fixed 15 submissions per second. Median in-window throughput ranged from 14.40 to 14.58 completed jobs per second across the four worker counts. The report includes per-run reconciliation, latency, resource use, and reproduction settings. [Benchmark report](benchmarks/results/2026-11-20-native-mixed/REPORT.md)
+
+The capacity and burst benchmark reconciled 26,475 jobs across 22 comparable runs. At 40 offered jobs per second, median in-window throughput was 18.00 jobs per second with one worker and 16.20 with four on the reserved Windows host. Five controlled worker crashes recovered in a median of 16.270 seconds. The report includes the two overload diagnostics and their generator and drain limits. [Capacity, burst and recovery report](benchmarks/results/2026-11-20-native-capacity/REPORT.md)
 
 ## Phase index
 

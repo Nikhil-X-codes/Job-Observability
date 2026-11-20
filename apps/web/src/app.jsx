@@ -17,6 +17,19 @@ const DeadLetters = lazy(() =>
   import("./operator.jsx").then((page) => ({ default: page.DeadLetters })),
 );
 
+function Brand() {
+  return (
+    <span className="brand">
+      <span className="brand-mark" aria-hidden="true">
+        <i />
+        <i />
+        <i />
+      </span>
+      JobFlow
+    </span>
+  );
+}
+
 function SignIn({ onSuccess, initialError }) {
   const [error, setError] = useState(initialError);
   const [sending, setSending] = useState(false);
@@ -39,9 +52,9 @@ function SignIn({ onSuccess, initialError }) {
   }
   return (
     <main className="login">
-      <div className="brand">JobFlow</div>
-      <h1>Sign in</h1>
-      <form className="panel form" onSubmit={submit}>
+      <Brand />
+      <form className="login-form panel form" onSubmit={submit}>
+        <h1>Sign in</h1>
         <label>
           Tenant <input name="tenant" defaultValue="demo" required />
         </label>
@@ -159,62 +172,78 @@ export function App() {
   const admin = session.role === "ADMIN";
   return (
     <BrowserRouter>
-      <header className="topbar">
-        <div className="brand">JobFlow</div>
-        <nav aria-label="Main">
-          {admin && <NavLink to="/overview">Overview</NavLink>}
-          <NavLink to="/jobs">Jobs</NavLink>
-          {admin && <NavLink to="/dead-letters">Dead letters</NavLink>}
-        </nav>
-        <div className="account">
-          <span className="connection" data-live={live} role="status">
-            {live ? "Live" : "Reconnecting"}
-          </span>
-          <button onClick={signOut}>Sign out</button>
+      <div className="shell">
+        <a className="skip-link" href="#main-content">
+          Skip to content
+        </a>
+        <aside className="sidebar">
+          <NavLink className="home-link" to={admin ? "/overview" : "/jobs"}>
+            <Brand />
+          </NavLink>
+          <nav aria-label="Main">
+            {admin && <NavLink to="/overview">Overview</NavLink>}
+            <NavLink to="/jobs">Jobs</NavLink>
+            {admin && <NavLink to="/dead-letters">Dead letters</NavLink>}
+          </nav>
+        </aside>
+        <div className="workspace">
+          <header className="topbar">
+            <span className="connection" data-live={live} role="status">
+              {live ? "Live" : "Reconnecting"}
+            </span>
+            <div className="account">
+              <span className="account-email" title={session.email}>
+                {session.email}
+              </span>
+              <button onClick={signOut}>Sign out</button>
+            </div>
+          </header>
+          <main className="dashboard" id="main-content" tabIndex={-1}>
+            {error && (
+              <p className="error" role="alert">
+                {error}
+              </p>
+            )}
+            <Suspense fallback={<p role="status">Loading…</p>}>
+              <Routes>
+                <Route
+                  path="/"
+                  element={
+                    <Navigate replace to={admin ? "/overview" : "/jobs"} />
+                  }
+                />
+                <Route path="/jobs" element={<Jobs revision={revision} />} />
+                <Route path="/jobs/new" element={<NewJob />} />
+                <Route
+                  path="/jobs/:id"
+                  element={<JobDetail revision={revision} />}
+                />
+                <Route
+                  path="/overview"
+                  element={
+                    admin ? (
+                      <Overview revision={revision} />
+                    ) : (
+                      <Navigate replace to="/jobs" />
+                    )
+                  }
+                />
+                <Route
+                  path="/dead-letters"
+                  element={
+                    admin ? (
+                      <DeadLetters revision={revision} />
+                    ) : (
+                      <Navigate replace to="/jobs" />
+                    )
+                  }
+                />
+                <Route path="*" element={<Navigate replace to="/jobs" />} />
+              </Routes>
+            </Suspense>
+          </main>
         </div>
-      </header>
-      <main className="dashboard">
-        {error && (
-          <p className="error" role="alert">
-            {error}
-          </p>
-        )}
-        <Suspense fallback={<p role="status">Loading…</p>}>
-          <Routes>
-            <Route
-              path="/"
-              element={<Navigate replace to={admin ? "/overview" : "/jobs"} />}
-            />
-            <Route path="/jobs" element={<Jobs revision={revision} />} />
-            <Route path="/jobs/new" element={<NewJob />} />
-            <Route
-              path="/jobs/:id"
-              element={<JobDetail revision={revision} />}
-            />
-            <Route
-              path="/overview"
-              element={
-                admin ? (
-                  <Overview revision={revision} />
-                ) : (
-                  <Navigate replace to="/jobs" />
-                )
-              }
-            />
-            <Route
-              path="/dead-letters"
-              element={
-                admin ? (
-                  <DeadLetters revision={revision} />
-                ) : (
-                  <Navigate replace to="/jobs" />
-                )
-              }
-            />
-            <Route path="*" element={<Navigate replace to="/jobs" />} />
-          </Routes>
-        </Suspense>
-      </main>
+      </div>
     </BrowserRouter>
   );
 }

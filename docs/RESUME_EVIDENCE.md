@@ -12,6 +12,7 @@
 
 - Built an asynchronous job processor with a PostgreSQL transactional outbox, RabbitMQ quorum queue, fenced worker leases, retries, dead-letter replay, and a live React dashboard. [Architecture](ARCHITECTURE.md)
 - Benchmarked 1, 2, 4, and 8 worker processes at 15 submissions per second on one Windows host. Verified completion of all 5,410 accepted jobs across 12 measured runs with zero duplicate committed demo effects. [Benchmark report](../benchmarks/results/2026-11-20-native-mixed/REPORT.md)
+- Measured capacity and burst behavior across 22 comparable runs on one Windows host. Reconciled all 26,475 accepted jobs against PostgreSQL and measured a 16.270-second median recovery across five controlled worker crashes. [Capacity and recovery report](../benchmarks/results/2026-11-20-native-capacity/REPORT.md)
 - Tested worker-crash recovery and pre-ACK redelivery against RabbitMQ and PostgreSQL. In the crash test, a replacement worker completed the expired claim and committed one demo effect. [Broker integration tests](../tests/broker/delivery.test.js)
 
 ## Interview explanations to practice
@@ -36,7 +37,7 @@ Create three jobs of varying priority → show job rows and attempts → bring u
 - Implemented transactional job submission and checked concurrent duplicate requests, a forced outbox insert failure, and tenant scoping against PostgreSQL. [API integration suite](../tests/integration/jobs.test.js)
 - Verified confirmed RabbitMQ delivery, manual ACK after database completion, and a replacement worker completing an expired claim after a forced process exit. The tested job produced one durable demo effect. [Broker recovery suite](../tests/broker/delivery.test.js)
 - Verified sign-in, job submission, job history, linked replay, and REST reconciliation after a browser disconnect. [Chrome smoke](../tests/ui/smoke.mjs) · [Overview screenshot](assets/jobflow-overview.png)
-- Recorded a 2:17 local walkthrough showing a forced worker exit, a lease-expiry retry, one committed effect, dead-letter replay, and the verified Grafana dashboard. [Browser recording](assets/jobflow-demo.webm)
+- Recorded a 2:22 local walkthrough showing a forced worker exit, a lease-expiry retry, one committed effect, dead-letter replay, and the verified Grafana dashboard. [Browser recording](assets/jobflow-demo.webm)
 
 ### Suggested demo recording sequence
 

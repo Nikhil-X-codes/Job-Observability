@@ -1,6 +1,6 @@
 # JobFlow Project Tracker
 
-**Status:** The code is public and hosted CI passed, including the live Compose integration suite. Native Grafana, the fixed-rate benchmark, and the portfolio walkthrough are verified. AWS release remains deferred.
+**Status:** JobFlow has a verified dashboard refresh and measured native capacity, burst, and worker-crash results. The live Compose suite passed on GitHub Actions. AWS release remains deferred.
 
 | Phase | State | Evidence (PR, test log, screenshots, URL) | Blocker |
 |---|---|---|---|
@@ -9,24 +9,25 @@
 | 02 API & Data | DONE | Migration applied, 5 live PostgreSQL API integration tests passed, and demo seed ran twice | — |
 | 03 Queue & Workers | DONE | Two native workers processed jobs. Pre-ACK redelivery and dispatch recovery preserved one effect. Broker suite passed in hosted Compose | — |
 | 04 Reliability | DONE | Native worker kill/recovery, broker restart, database outage recovery, 5 PostgreSQL failure tests and 7 API tests passed. Hosted integration suite passed | — |
-| 05 Dashboard | DONE | [Chrome smoke](tests/ui/smoke.mjs) and [dashboard screenshot](docs/assets/jobflow-overview.png) | — |
+| 05 Dashboard | DONE | Refreshed console verified in Chrome, including mobile layout, linked filters, and keyboard dismissal of the replay dialog. [Dashboard screenshot](docs/assets/jobflow-overview.png) | — |
 | 06 Observability | DONE | Native Prometheus scraped four processes and matched PostgreSQL completion counts. Grafana returned live rate and p95 queries. [Rendered dashboard](docs/assets/jobflow-grafana.png) | — |
-| 07 Benchmarks | DONE | 12 measured runs at 1, 2, 4, and 8 workers. All 5,410 accepted jobs completed after drain. [Report and per-run data](benchmarks/results/2026-11-20-native-mixed/REPORT.md) | Fixed-rate scaling evidence. Saturation and repeated fault-timing measurements remain open |
+| 07 Benchmarks | DONE | 22 comparable capacity and burst runs reconciled 26,475 jobs. Five real worker crashes recovered with one effect each. [Report and per-run data](benchmarks/results/2026-11-20-native-capacity/REPORT.md) | Four-worker 70 jobs/s has one comparable trial and two retained overload diagnostics |
 | 08 AWS Release | DEFERRED | Offline production Compose verification exposed only web ports 80 and 443 | Final release stage, account, region, and budget |
-| 09 Portfolio | DONE | Public source, green hosted CI, verified 2:17 [operator walkthrough](docs/assets/jobflow-demo.webm), screenshots, and [benchmark evidence](benchmarks/results/2026-11-20-native-mixed/REPORT.md) | Optional hosted demo is tracked in Phase 08 |
+| 09 Portfolio | DONE | Public source, green hosted CI, verified 2:22 [operator walkthrough](docs/assets/jobflow-demo.webm), screenshots, and [benchmark evidence](benchmarks/results/2026-11-20-native-mixed/REPORT.md) | Optional hosted demo is tracked in Phase 08 |
 
 ## Decisions
 
 - App code is **JavaScript (ESM)**.
 - **PostgreSQL** is system of record, **RabbitMQ** is message transport.
 - **AWS EC2 + Docker Compose** is first cloud target; production-grade multi-node HA is out of scope.
-- Performance figures apply to the versioned native workload in the benchmark ledger. Time-to-recovery and uptime claims are pending.
+- Performance and worker crash recovery figures apply to the versioned native workloads in the benchmark ledger. Production uptime is unmeasured.
 
 ## Benchmark ledger
 
 | Date | Git SHA | Workload | Workers | Duration | Throughput | p95 end-to-end | Recovery | Report |
 |---|---|---|---|---|---|---|---|---|
 | 2026-11-20 | `fd07243` | Mixed, 15 submissions/s | 1, 2, 4, 8 | 15s warmup + 30s measured, 3 repetitions each | Median 14.40–14.58 completed jobs/s | Median of run p95s 864–1,013 ms | Functional coverage only | [Native report](benchmarks/results/2026-11-20-native-mixed/REPORT.md) |
+| 2026-11-20 | `cb58172`, `97a9053` | Steady 15/40/70 jobs/s and 10/55/10 burst | 1, 4 | 35s steady and 40s burst | At 40 offered jobs/s, medians 18.00 and 16.20 completed jobs/s | At 40 offered jobs/s, median run p95s 39.96s and 43.49s | Median 16.270s across 5 worker kills | [Capacity, burst and recovery report](benchmarks/results/2026-11-20-native-capacity/REPORT.md) |
 
 ## Open decision log
 
@@ -98,6 +99,17 @@
 - **Phase** — Phases 01 and 09.
 - **Commands and results** — From a fresh Git archive of `c8afaca`, dependency installation, Prisma generation, lint, formatting, all 34 unit tests, and the production build passed. `git push --set-upstream origin main` published that commit and the remote SHA matched. [Public repository](https://github.com/Nikhil-X-codes/Job-Observability)
 - **Acceptance evidence** — GitHub Actions passed the full CI job on `c8afaca`, including `npm run test:integration`. That command started the Compose stack, exercised dependency outages and recovery, and ran the broker, API and failure suites. [Hosted run](https://github.com/Nikhil-X-codes/Job-Observability/actions/runs/44709186444)
+
+## Dashboard refresh — 2026-11-20
+
+- **Changes made** — Added desktop sidebar navigation, compact queue summaries, deep links to retrying and failed jobs, and clearer job tables and histories. Cancellation and replay use native dialogs.
+- **Commands and results** — The Chrome walkthrough passed against fresh native PostgreSQL and RabbitMQ. It checked sign-in, linked filters, cancellation confirmation, worker exit and recovery, replay focus and Escape dismissal, reconnect, and mobile layout. The updated WebM was decoded at 2:21.68. [Walkthrough](docs/assets/jobflow-demo.webm) · [Dashboard screenshot](docs/assets/jobflow-overview.png)
+
+## Capacity, burst, and recovery handoff — 2026-11-20
+
+- **Objective** — Measure in-window throughput, overload backlog, drain time, and recovery using real HTTP submissions, PostgreSQL, RabbitMQ, and worker processes on the reserved native host.
+- **Commands and results** — Ran `scripts/run-benchmark.mjs` and `scripts/benchmark-recovery.mjs` on commits `cb58172` and `97a9053`. The 22 comparable load trials accepted and completed 26,475 jobs. Of those, 11,779 finished during the arrival windows and 14,696 completed during drain. All five crash trials recovered and committed one effect per job. [Measured data](benchmarks/results/2026-11-20-native-capacity/measurements.json)
+- **Open issues and risks** — Two four-worker 70 jobs/s attempts exceeded the generator miss tolerance. One reached the drain limit with 162 jobs still outstanding. Both snapshots are preserved alongside the comparable trial, and neither contributes to its throughput figure. A separate load-generator host and longer runs would be needed to establish a production capacity limit. [Benchmark report](benchmarks/results/2026-11-20-native-capacity/REPORT.md)
 
 ## Session handoff — 2026-11-20
 

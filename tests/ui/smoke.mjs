@@ -170,10 +170,24 @@ try {
   await page.getByRole("heading", { name: "Overview" }).waitFor();
   await page.getByText("Live", { exact: true }).waitFor();
 
-  await page.getByRole("link", { name: "Jobs", exact: true }).click();
+  await page.getByRole("link", { name: /Waiting to retry/ }).click();
+  await page.waitForURL("**/jobs?status=RETRY_WAIT");
+  assert.equal(
+    await page.getByLabel("Status", { exact: true }).inputValue(),
+    "RETRY_WAIT",
+  );
+  await page.getByRole("button", { name: "Clear filters" }).click();
+  await page.waitForURL("**/jobs");
+  assert.equal(
+    await page.getByLabel("Status", { exact: true }).inputValue(),
+    "",
+  );
   await page.getByRole("link", { name: "New job" }).click();
   await page.getByLabel("Report ID").fill("browser-report");
   await page.getByRole("button", { name: "Submit job" }).click();
+  await page.locator('[data-status="PENDING"]').waitFor();
+  await page.getByRole("button", { name: "Cancel job", exact: true }).click();
+  await page.getByRole("button", { name: "Keep job" }).click();
   await page.locator('[data-status="PENDING"]').waitFor();
   await holdFrame(
     page,
@@ -220,6 +234,17 @@ try {
 
   await page.getByRole("link", { name: "Dead letters" }).click();
   await page.getByRole("button", { name: "Replay", exact: true }).click();
+  const replayDialog = page.getByRole("dialog", { name: "Replay job" });
+  await replayDialog.waitFor();
+  assert.equal(
+    await page
+      .getByLabel("Reason")
+      .evaluate((input) => input === document.activeElement),
+    true,
+  );
+  await page.keyboard.press("Escape");
+  await replayDialog.waitFor({ state: "hidden" });
+  await page.getByRole("button", { name: "Replay", exact: true }).click();
   await page.getByLabel("Reason").fill("Browser smoke recovery");
   await holdFrame(
     page,
@@ -261,6 +286,12 @@ try {
   await page.waitForFunction(
     () => document.documentElement.scrollWidth <= innerWidth,
   );
+  await page.getByRole("link", { name: "Jobs", exact: true }).click();
+  await page.getByRole("heading", { name: "Jobs", exact: true }).waitFor();
+  await page.getByRole("link", { name: "Generate report" }).waitFor();
+  await page.waitForFunction(
+    () => document.documentElement.scrollWidth <= innerWidth,
+  );
   await page.getByRole("button", { name: "Sign out" }).click();
   await page.getByRole("heading", { name: "Sign in" }).waitFor();
   assert.deepEqual(errors, []);
@@ -279,7 +310,7 @@ try {
     await video.saveAs(recording);
   }
   console.log(
-    "Browser smoke passed for sign-in, submission, job history, replay, reconnect, and mobile layout.",
+    "Browser smoke passed for sign-in, linked filters, submission, cancellation confirmation, job history, replay, reconnect, and mobile layout.",
   );
 } finally {
   for (const { child } of processes) child.kill();

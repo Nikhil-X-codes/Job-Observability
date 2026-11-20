@@ -2,7 +2,7 @@
 
 ## Non-negotiable rule
 
-Use the recorded workload, hardware, window, and denominators when citing measured performance. The fixed-rate native worker comparison is available with its per-run data. [Native benchmark report](../benchmarks/results/2026-11-20-native-mixed/REPORT.md)
+Use the recorded workload, hardware, window, and denominators when citing measured performance. Both native experiments include per-run data with the report. [Capacity, burst and crash recovery](../benchmarks/results/2026-11-20-native-capacity/REPORT.md) · [Fixed-rate worker comparison](../benchmarks/results/2026-11-20-native-mixed/REPORT.md)
 
 ## Metric definitions
 
@@ -71,7 +71,25 @@ Use a clean Git checkout and an isolated benchmark tenant with seeded credential
 
 Run `npm run test:load`. Defaults are 1, 2, 4, and 8 workers, three repetitions, a 15-second warmup, then a 60-second measured run. Use `BENCHMARK_WORKERS`, `BENCHMARK_REPETITIONS`, `BENCHMARK_RATE`, `BENCHMARK_DURATION`, and `BENCHMARK_WORKLOAD` to select a comparable workload. The workload choices are `report`, `io`, and `mixed`. Keep configuration fixed when comparing worker counts.
 
-The runner exports HTTP latency, PostgreSQL job and effect reconciliation, Prometheus CPU and memory samples, and a worker-count summary under `benchmarks/results/local/`. It records elapsed wall time from the k6 invocation start through completion and counts database terminal timestamps within that window. Review the resulting observation windows, host limits, and failure checks before filling in the benchmark report. The functional smoke runs are independent of load measurement. [k6 arrival-rate model](https://grafana.com/docs/k6/latest/using-k6/scenarios/executors/constant-arrival-rate/)
+The runner exports HTTP latency, PostgreSQL job and effect reconciliation, per-second arrival and completion counts, and Prometheus CPU and memory samples under `benchmarks/results/local/`. It anchors the measurement window to the k6 scenario start and counts durable job transitions within the configured arrival duration. Jobs that finish during drain appear separately. Each formal comparison should cover three or more repetitions per condition. [k6 arrival-rate model](https://grafana.com/docs/k6/latest/using-k6/scenarios/executors/constant-arrival-rate/) · [k6 scenario clock](https://grafana.com/docs/k6/latest/javascript-api/k6-execution/)
+
+### Capacity, burst, and crash profiles
+
+Use the native setup above with a clean checkout, disposable data, and a reserved test window. Start the fixture API with `WRITE_RATE_LIMIT=12000` and use the same value in the benchmark environment so it appears in the recorded configuration. Use two-second Prometheus scrapes. The runner verifies that PostgreSQL has `fsync` and `synchronous_commit` enabled.
+
+```bash
+export BENCHMARK_RUNTIME=native BENCHMARK_WORKLOAD=mixed
+export BENCHMARK_WORKERS=1,4 BENCHMARK_REPETITIONS=3 BENCHMARK_VUS=50
+export BENCHMARK_DURATION=35s BENCHMARK_WARMUP_SECONDS=10
+export BENCHMARK_MAX_DROP_FRACTION=0.005
+BENCHMARK_RATES=15,40,70 npm run test:load
+BENCHMARK_RATES=55 BENCHMARK_BURST=1 BENCHMARK_BASELINE_RATE=10 npm run test:load
+BENCHMARK_RECOVERY_REPETITIONS=5 node scripts/benchmark-recovery.mjs
+```
+
+The capacity sweep rotates rate order across repetitions. The burst profile sends a 10-second baseline, 10-second spike, and 20-second baseline tail. A drained warmup uses the steady profile in both experiments. The runner separates k6 iteration misses, HTTP rejections, job outcomes, and duplicate or missing effects. Set `BENCHMARK_FIRST_REPETITION` and `BENCHMARK_REPETITIONS` to collect specific outstanding trials with the same settings, and retain the original run IDs in the final report.
+
+The crash harness runs an ordinary local worker, blocks its effect write using a short transaction in the disposable database, and kills the worker after verifying that the write is waiting. Keep the scheduler and dispatcher running so lease expiry triggers a normal retry. The harness reports five default repetitions with exact database lifecycle timestamps and checks for one committed effect per recovered job. Reserve the broker vhost and database exclusively for these runs.
 
 ## Required scenarios
 

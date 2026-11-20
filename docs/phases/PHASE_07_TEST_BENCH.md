@@ -1,6 +1,6 @@
 # Phase 07 — Performance, scale & failure benchmarks
 
-**Status:** The isolated native worker-scaling baseline is complete. The full report covers 12 measured runs and 5,410 accepted jobs across 1, 2, 4, and 8 workers. [Report](../../benchmarks/results/2026-11-20-native-mixed/REPORT.md)
+**Status:** The isolated native fixed-rate baseline, capacity sweep, burst comparison, and five worker-crash timings are complete. The capacity and burst report includes 22 comparable trials, two overload diagnostics, and the raw measurement summaries. [Capacity report](../../benchmarks/results/2026-11-20-native-capacity/REPORT.md) · [Fixed-rate baseline](../../benchmarks/results/2026-11-20-native-mixed/REPORT.md)
 
 ## Goal
 
@@ -28,7 +28,7 @@ Read `AGENTS.md`, `docs/ARCHITECTURE.md`, `docs/DATA_AND_API_CONTRACTS.md`, and 
 - [x] Worker counts were compared using the same host, workload and settings.
 - [x] README and resume figures link to the measured profile.
 
-The benchmark uses a fixed offered rate. A rate sweep, burst measurements, and repeated timing of injected failures are open. Existing native failure tests cover retries, lease recovery, redelivery, broker restart, and database outage as functional checks.
+The rate sweep covers 15, 40, and 70 offered jobs/s, and the burst comparison peaks at 55 jobs/s. The four-worker 70 jobs/s condition retained one comparable trial and two generator-limited diagnostics. The five timed crash trials exercise actual worker exits and scheduler recovery. Broker restart and PostgreSQL outage retain functional coverage.
 
 ## Deliverables
 

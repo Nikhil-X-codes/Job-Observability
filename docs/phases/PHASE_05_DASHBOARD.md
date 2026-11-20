@@ -1,6 +1,6 @@
 # Phase 05 — React monitoring experience
 
-**Status:** Verified with Chrome, native PostgreSQL, and native RabbitMQ. See the tracker for recorded checks.
+**Status:** The refreshed console is verified with Chrome, native PostgreSQL, and native RabbitMQ. The browser check covers linked filters, cancellation confirmation, replay focus and Escape dismissal, and mobile layout. [Dashboard screenshot](../assets/jobflow-overview.png)
 
 ## Goal
 
