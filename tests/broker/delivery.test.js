@@ -218,6 +218,7 @@ it("reissues a confirmed, unclaimed dispatch after losing the broker delivery", 
     const message = await channel.get(queue, { noAck: false });
     expect(JSON.parse(message.content.toString()).jobId).toBe(job.id);
     channel.ack(message);
+    await channel.checkQueue(queue);
   });
   expect(await db.attempt.count({ where: { jobId: job.id } })).toBe(0);
   const confirmed = await db.outboxEvent.findUniqueOrThrow({
@@ -239,16 +240,21 @@ it("reissues a confirmed, unclaimed dispatch after losing the broker delivery", 
     await db.outboxEvent.findUniqueOrThrow({ where: { id: dispatch.id } }),
   ).toMatchObject({ status: "PENDING", publishedAt: null });
 
-  start("worker", "restore-worker");
   start("dispatcher", "restore-dispatcher");
+  await vi.waitFor(
+    async () => {
+      expect(
+        await db.outboxEvent.findUniqueOrThrow({ where: { id: dispatch.id } }),
+      ).toMatchObject({ status: "SENT" });
+    },
+    { timeout: 12_000, interval: 100 },
+  );
+  start("worker", "restore-worker");
   await vi.waitFor(
     async () => {
       expect(
         await db.job.findUniqueOrThrow({ where: { id: job.id } }),
       ).toMatchObject({ status: "COMPLETED", attemptNumber: 1 });
-      expect(
-        await db.outboxEvent.findUniqueOrThrow({ where: { id: dispatch.id } }),
-      ).toMatchObject({ status: "SENT" });
     },
     { timeout: 12_000, interval: 100 },
   );

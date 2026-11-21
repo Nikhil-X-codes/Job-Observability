@@ -42,9 +42,15 @@
 | --- | --- |
 | Host or broker loss | Restore a populated PostgreSQL backup, replace the broker, and show that unclaimed jobs complete and preserve one effect per job. Verify restore and rollback from the deployment runbook. |
 | Dashboard lag | While Socket.IO is unavailable and REST is reachable, a visible job list shows a newly submitted job automatically. |
-| Backlog and worker scaling | Atomic PostgreSQL batch leasing raised median pipelined dispatch from 108.66 to 304.67 jobs/s in the isolated component benchmark. An end-to-end load comparison is still open. [Dispatcher report](benchmarks/results/2026-11-21-dispatcher/REPORT.md) |
+| Backlog and worker scaling | Atomic PostgreSQL batch leasing raised median pipelined dispatch from 108.66 to 304.67 jobs/s in the isolated component benchmark. Six successful steady and burst end-to-end trials on the release source completed 4,133 jobs with one effect each. [Dispatcher report](benchmarks/results/2026-11-21-dispatcher/REPORT.md) · [End-to-end report](benchmarks/results/2026-11-21-release-candidate/REPORT.md) |
 | Sandbox job integrations | Verified Resend acceptance and duplicate-key behavior. The account owner confirmed Delivered and Bounced in Resend for the matching JobFlow receipts. Verified one Webhook.site capture per success and forced-error job. |
 | Single-host availability | The local upgrade and rollback rehearsal preserved PostgreSQL and RabbitMQ. AWS restore and rollback are pending. A multi-host deployment requires a topology and budget decision. |
+
+## Release verification — 2026-11-21
+
+- **GitHub** — PR #1 passed branch and pull request CI. The squash commit `364e65a5164c54e803b34999a25197449b481b72` contains the tested release tree. The first `main` run exposed a race in the broker recovery fixture. The fixture now waits for a broker round trip after discarding the original delivery and for the replacement dispatch to be recorded before starting the worker. [Pull request](https://github.com/Nikhil-X-codes/Job-Observability/pull/1) · [First main CI run](https://github.com/Nikhil-X-codes/Job-Observability/actions/runs/44892106238)
+- **Backlog** — Three passing steady trials at 15 submissions/s and three passing burst trials peaking at 55 submissions/s completed 4,133 accepted jobs. All six reconciled one effect per job and no remaining work. The original steady warmup dropped 18 scheduled iterations and one initial burst request failed. Both diagnostic runs were retained. [End-to-end report](benchmarks/results/2026-11-21-release-candidate/REPORT.md)
+- **EC2** — The `jobflow` AWS CLI profile authenticated in Sydney. The instance was not registered with Systems Manager and neither AWS system logs nor the local SSH cache had its host fingerprint. The EC2 restore and rollback rehearsal remains open.
 
 ## AWS candidate verification follow-up — 2026-11-21
 
