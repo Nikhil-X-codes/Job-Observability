@@ -36,6 +36,12 @@
 - [ ] Public domain for HTTPS (or an approved alternative)
 - [x] Exact Node, RabbitMQ, PostgreSQL, and Caddy image tags are pinned in [the Dockerfile](infra/Dockerfile) and [Compose configuration](infra/compose.yaml)
 
+## Observability README — 2026-11-21
+
+- **Phase** — Phases 06 and 09 documentation.
+- **Changes made** — Made the administrator observability workflow the entry point in the [README](README.md). Documented tenant-scoped admin access, the separate Grafana sign-in, local setup with the observability profile, and the measured evidence.
+- **Acceptance evidence** — Compared the permissions, Compose settings, and Grafana panel descriptions with the repository. Checked all 18 local README link references and all 8 npm script references. The live stack was not exercised during this documentation update.
+
 ## Foundation follow-up — 2026-11-20
 
 - **Phase** — Phase 01.
