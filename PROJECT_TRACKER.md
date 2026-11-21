@@ -42,6 +42,13 @@
 - **Changes made** — Made the administrator observability workflow the entry point in the [README](README.md). Documented tenant-scoped admin access, the separate Grafana sign-in, local setup with the observability profile, and the measured evidence.
 - **Acceptance evidence** — Compared the permissions, Compose settings, and Grafana panel descriptions with the repository. Checked all 18 local README link references and all 8 npm script references. The live stack was not exercised during this documentation update.
 
+## CI Node setup repair — 2026-11-21
+
+- **Phase** — Phase 01.
+- **Changes made** — Restored the root `.nvmrc` removed in `87014d6`. The CI workflow uses that file to select the same Node release line as the workspace. [Failed GitHub Actions run](https://github.com/Nikhil-X-codes/Job-Observability/actions/runs/44879609504)
+- **Commands and results** — Local lint, format check, all 35 unit tests, and the web build passed. Hosted CI runs the live Docker Compose integration suite. [CI runs](https://github.com/Nikhil-X-codes/Job-Observability/actions/workflows/ci.yml)
+- **Release status** — The AWS deployment workflow is manually dispatched. Phase 08 tracks the production release.
+
 ## Foundation follow-up — 2026-11-20
 
 - **Phase** — Phase 01.
