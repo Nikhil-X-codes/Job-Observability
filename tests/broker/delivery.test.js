@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { once } from "node:events";
+import { readFile } from "node:fs/promises";
 import { createServer } from "node:net";
 import { createInterface } from "node:readline";
 import { createDatabase } from "@jobflow/db";
@@ -10,6 +11,7 @@ import { afterAll, afterEach, beforeAll, expect, it, vi } from "vitest";
 import { parseSubmission } from "../../apps/api/src/job-input.js";
 import { submitJob } from "../../apps/api/src/jobs.js";
 import { handleDelivery } from "../../services/worker/src/delivery.js";
+import { createGateway } from "../../services/worker/src/gateway.js";
 
 const databaseUrl = process.env.TEST_DATABASE_URL;
 const amqpUrl = process.env.TEST_AMQP_URL;
@@ -204,6 +206,131 @@ it("redelivers after the pre-ACK connection closes and resumes dispatch with com
   ).toBe("SUPERSEDED");
 }, 35_000);
 
+it("reissues a confirmed, unclaimed dispatch after losing the broker delivery", async () => {
+  const job = await createJob();
+  const [dispatch] = await leaseDispatches(db, { limit: 1, leaseMs: 20_000 });
+  expect(dispatch.jobId).toBe(job.id);
+  await withQueue(amqpUrl, true, (channel) =>
+    publishDispatch(channel, dispatch),
+  );
+  expect(await recordDispatch(db, dispatch)).toBe(1);
+  await withQueue(amqpUrl, false, async (channel) => {
+    const message = await channel.get(queue, { noAck: false });
+    expect(JSON.parse(message.content.toString()).jobId).toBe(job.id);
+    channel.ack(message);
+  });
+  expect(await db.attempt.count({ where: { jobId: job.id } })).toBe(0);
+  const confirmed = await db.outboxEvent.findUniqueOrThrow({
+    where: { id: dispatch.id },
+  });
+  expect(confirmed.status).toBe("SENT");
+  expect(confirmed.publishedAt).toBeInstanceOf(Date);
+
+  const rearm = await readFile(
+    new URL(
+      "../../infra/postgres/rearm-queued-dispatches.sql",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  expect(await db.$executeRawUnsafe(rearm)).toBe(1);
+  expect(await db.$executeRawUnsafe(rearm)).toBe(0);
+  expect(
+    await db.outboxEvent.findUniqueOrThrow({ where: { id: dispatch.id } }),
+  ).toMatchObject({ status: "PENDING", publishedAt: null });
+
+  start("worker", "restore-worker");
+  start("dispatcher", "restore-dispatcher");
+  await vi.waitFor(
+    async () => {
+      expect(
+        await db.job.findUniqueOrThrow({ where: { id: job.id } }),
+      ).toMatchObject({ status: "COMPLETED", attemptNumber: 1 });
+      expect(
+        await db.outboxEvent.findUniqueOrThrow({ where: { id: dispatch.id } }),
+      ).toMatchObject({ status: "SENT" });
+    },
+    { timeout: 12_000, interval: 100 },
+  );
+  expect(await db.businessEffect.count({ where: { jobId: job.id } })).toBe(1);
+}, 25_000);
+
+it("retries a lost gateway response with the original key and commits one effect", async () => {
+  const input = parseSubmission(
+    {
+      type: "SEND_EMAIL",
+      payload: {
+        templateId: "jobflow-email-success-001",
+        recipientId: "delivered",
+      },
+    },
+    new Date(),
+  );
+  const { job } = await submitJob(db, user, input, randomUUID());
+  const seen = new Map();
+  const request = vi.fn(async (_url, options) => {
+    const key = options.headers["Idempotency-Key"];
+    if (seen.has(key)) {
+      expect(options.body).toBe(seen.get(key));
+      return new Response(null, { status: 204 });
+    }
+    seen.set(key, options.body);
+    throw new Error("Gateway accepted before losing the response");
+  });
+  const gateway = createGateway(
+    {
+      WEBHOOK_SITE_URL:
+        "https://webhook.site/00000000-0000-4000-8000-000000000001",
+      RESEND_API_KEY: "re_fixture_key",
+      DELIVERY_TENANT_ID: user.tenantId,
+    },
+    request,
+  );
+  start("dispatcher", "gateway-dispatcher");
+  start("scheduler", "gateway-scheduler");
+
+  await withQueue(amqpUrl, false, async (channel, disconnected) => {
+    const context = {
+      db,
+      workerId: "gateway-worker",
+      logger: { info() {}, warn() {} },
+      channel,
+      disconnected,
+      gateway,
+    };
+    for (let attemptNo = 1; attemptNo <= 2; attemptNo += 1) {
+      const message = await vi.waitFor(
+        async () => {
+          const item = await channel.get(queue, { noAck: false });
+          expect(item).toBeTruthy();
+          return item;
+        },
+        { timeout: 8000, interval: 50 },
+      );
+      expect(JSON.parse(message.content.toString())).toEqual({
+        jobId: job.id,
+        attemptNo,
+      });
+      await handleDelivery(context, message);
+    }
+  });
+
+  expect(
+    await db.job.findUniqueOrThrow({ where: { id: job.id } }),
+  ).toMatchObject({ status: "COMPLETED", attemptNumber: 2 });
+  const attempts = await db.attempt.findMany({
+    where: { jobId: job.id },
+    orderBy: { attemptNo: "asc" },
+  });
+  expect(attempts.map(({ errorCode }) => errorCode)).toEqual([
+    "TRANSIENT",
+    null,
+  ]);
+  expect(request).toHaveBeenCalledTimes(2);
+  expect([...seen.keys()]).toEqual([`jobflow/${job.id}`]);
+  expect(await db.businessEffect.count({ where: { jobId: job.id } })).toBe(1);
+}, 25_000);
+
 it("recovers a real worker process killed while it holds a claim", async () => {
   const job = await createJob();
   const [dispatch] = await leaseDispatches(db, { limit: 1, leaseMs: 20_000 });
@@ -262,6 +389,12 @@ it("recovers a real worker process killed while it holds a claim", async () => {
     );
     expect(dispatcher).toContain(
       'outbox_dispatches_total{outcome="confirmed"} 1',
+    );
+    expect(dispatcher).toContain(
+      'outbox_dispatch_stage_seconds_count{stage="publish"} 1',
+    );
+    expect(dispatcher).toContain(
+      'outbox_dispatch_stage_seconds_count{stage="record"} 1',
     );
     expect(scheduler).toContain(
       'worker_lease_expirations_total{job_type="MOCK_WEBHOOK"} 1',

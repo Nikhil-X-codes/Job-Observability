@@ -6,12 +6,13 @@ import {
 } from "@jobflow/db/processing";
 import { decodeDelivery } from "@jobflow/queue";
 import { runHandler } from "./handlers.js";
+import { DeliveryError } from "./gateway.js";
 
 const leaseMs = 15_000;
 
 export const workerLabels = { worker_group: "demo" };
 
-async function execute(db, lease, disconnected, metrics) {
+async function execute(db, lease, disconnected, metrics, gateway) {
   const heartbeatStop = new AbortController();
   const leaseLost = new AbortController();
   const timeout = AbortSignal.timeout(5000);
@@ -36,9 +37,10 @@ async function execute(db, lease, disconnected, metrics) {
 
   let outcome;
   try {
-    outcome = { result: await runHandler(lease, signal) };
-  } catch {
-    outcome = { errorCode: timeout.aborted ? "TIMEOUT" : "INTERNAL" };
+    outcome = { result: await runHandler(lease, signal, gateway) };
+  } catch (error) {
+    const code = error instanceof DeliveryError ? error.code : "INTERNAL";
+    outcome = { errorCode: timeout.aborted ? "TIMEOUT" : code };
   } finally {
     heartbeatStop.abort();
     await heartbeat;
@@ -52,7 +54,7 @@ async function execute(db, lease, disconnected, metrics) {
 }
 
 export async function handleDelivery(
-  { db, workerId, logger, channel, disconnected, metrics },
+  { db, workerId, logger, channel, disconnected, metrics, gateway },
   message,
 ) {
   const envelope = decodeDelivery(message.content);
@@ -67,7 +69,7 @@ export async function handleDelivery(
     metrics?.claimed(lease);
     metrics?.active.inc(workerLabels);
     try {
-      disposition = await execute(db, lease, disconnected, metrics);
+      disposition = await execute(db, lease, disconnected, metrics, gateway);
     } finally {
       metrics?.active.dec(workerLabels);
     }

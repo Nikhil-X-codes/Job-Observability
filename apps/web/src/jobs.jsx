@@ -16,6 +16,28 @@ const payloadFields = {
   ],
   MOCK_WEBHOOK: [["eventId", "Mock event ID"]],
 };
+const externalFields = {
+  SEND_EMAIL: [
+    [
+      "templateId",
+      "Email fixture ID",
+      ["jobflow-email-success-001", "jobflow-email-bounce-001"],
+    ],
+    [
+      "recipientId",
+      "Recipient scenario",
+      ["delivered", "bounced", "complained"],
+    ],
+  ],
+  DELIVER_WEBHOOK: [
+    [
+      "eventId",
+      "Webhook fixture ID",
+      ["jobflow-webhook-success-001", "jobflow-webhook-retry-001"],
+    ],
+    ["destinationId", "Destination ID", ["webhook-site"]],
+  ],
+};
 const statuses = [
   "PENDING",
   "QUEUED",
@@ -135,11 +157,13 @@ export function Jobs({ revision }) {
               onChange={(event) => changeFilter("type", event.target.value)}
             >
               <option value="">All types</option>
-              {Object.keys(payloadFields).map((item) => (
-                <option key={item} value={item}>
-                  {label(item)}
-                </option>
-              ))}
+              {Object.keys({ ...payloadFields, ...externalFields }).map(
+                (item) => (
+                  <option key={item} value={item}>
+                    {label(item)}
+                  </option>
+                ),
+              )}
             </select>
           </label>
           {(status || type) && (
@@ -223,6 +247,10 @@ export function Jobs({ revision }) {
 
 export function NewJob() {
   const [type, setType] = useState("GENERATE_REPORT");
+  const { data: capabilities } = useApi("/job-capabilities", 0);
+  const fields = capabilities?.externalDelivery
+    ? { ...payloadFields, ...externalFields }
+    : payloadFields;
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const submission = useRef();
@@ -237,10 +265,11 @@ export function NewJob() {
       const body = {
         type,
         payload: Object.fromEntries(
-          payloadFields[type].map(([name]) => [name, form.get(name)]),
+          fields[type].map(([name]) => [name, form.get(name)]),
         ),
         priority: form.get("priority"),
-        maxAttempts: Number(form.get("maxAttempts")),
+        maxAttempts:
+          type === "DELIVER_WEBHOOK" ? 1 : Number(form.get("maxAttempts")),
         ...(runAt && { runAt: new Date(runAt).toISOString() }),
       };
       const contents = JSON.stringify(body);
@@ -274,22 +303,32 @@ export function NewJob() {
             value={type}
             onChange={(event) => setType(event.target.value)}
           >
-            {Object.keys(payloadFields).map((item) => (
+            {Object.keys(fields).map((item) => (
               <option key={item} value={item}>
                 {label(item)}
               </option>
             ))}
           </select>
         </label>
-        {payloadFields[type].map(([name, title]) => (
+        {fields[type].map(([name, title, options]) => (
           <label key={name}>
             {title}
-            <input
-              name={name}
-              required
-              maxLength={64}
-              pattern={"[A-Za-z0-9_\\-]{1,64}"}
-            />
+            {options ? (
+              <select name={name}>
+                {options.map((option) => (
+                  <option value={option} key={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                name={name}
+                required
+                maxLength={64}
+                pattern={"[A-Za-z0-9_\\-]{1,64}"}
+              />
+            )}
           </label>
         ))}
         <div className="form-pair">
@@ -303,18 +342,22 @@ export function NewJob() {
               ))}
             </select>
           </label>
-          <label>
-            Maximum attempts{" "}
-            <input
-              name="maxAttempts"
-              type="number"
-              min="1"
-              max="5"
-              step="1"
-              defaultValue="3"
-              required
-            />
-          </label>
+          {type === "DELIVER_WEBHOOK" ? (
+            <p className="muted">Webhook.site fixtures use one attempt.</p>
+          ) : (
+            <label>
+              Maximum attempts{" "}
+              <input
+                name="maxAttempts"
+                type="number"
+                min="1"
+                max="5"
+                step="1"
+                defaultValue="3"
+                required
+              />
+            </label>
+          )}
         </div>
         <label>
           Run at (local time) <input name="runAt" type="datetime-local" />

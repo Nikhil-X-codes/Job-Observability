@@ -25,7 +25,7 @@ Read `AGENTS.md`, `docs/ARCHITECTURE.md`, `docs/DATA_AND_API_CONTRACTS.md`, and 
 - [x] Public repo can be set up from scratch using documented commands. [Hosted CI](https://github.com/Nikhil-X-codes/Job-Observability/actions/runs/44709186444)
 - [x] Resume claims link to reproducible tests and measurements.
 - [x] Architecture and failure tradeoffs are documented.
-- [ ] Optional AWS demo remains deferred with Phase 08.
+- [x] The optional AWS demo is reachable over HTTPS. Operational verification is tracked in [Phase 08](PHASE_08_AWS_RELEASE.md). [Live demo](https://nikhil-jobflow.duckdns.org/)
 - [x] Test evidence, screenshots, benchmarks and known limitations are included.
 
 The recording shows a report job moving from submission to a worker claim. A local test fixture pauses the first worker before it commits. The script kills the process, starts the scheduler, verifies the retry and one committed effect, replays a separate dead-lettered job, and shows the captured Grafana dashboard. Open the recorded file directly to play it.

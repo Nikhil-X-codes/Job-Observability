@@ -17,19 +17,13 @@ jobs:
     runs-on: [self-hosted, linux, jobflow-release]
     timeout-minutes: 25
     env:
-      JOBFLOW_RELEASE_TAG: ${{ github.sha }}
       JOBFLOW_PRODUCTION_ENV_FILE: ${{ vars.JOBFLOW_PRODUCTION_ENV_FILE }}
+      JOBFLOW_ENABLE_DELIVERY: ${{ vars.JOBFLOW_ENABLE_DELIVERY }}
+      JOBFLOW_DELIVERY_ACCEPT_NEW: ${{ vars.JOBFLOW_DELIVERY_ACCEPT_NEW }}
     steps:
       - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
       - name: Build and deploy the approved commit
         shell: bash
-        run: |
-          set -euo pipefail
-          test -n "$JOBFLOW_PRODUCTION_ENV_FILE"
-          test -r "$JOBFLOW_PRODUCTION_ENV_FILE"
-          compose=(docker compose --env-file "$JOBFLOW_PRODUCTION_ENV_FILE" -p jobflow-prod -f infra/compose.yaml -f infra/compose.prod.yaml)
-          "${compose[@]}" config --quiet
-          "${compose[@]}" up -d --build --wait --wait-timeout 180
-          "${compose[@]}" exec -T api node -e "fetch('http://127.0.0.1:3000/health/ready', {signal: AbortSignal.timeout(5000)}).then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))"
+        run: bash scripts/release.sh deploy

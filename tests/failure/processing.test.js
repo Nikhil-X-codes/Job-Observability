@@ -84,6 +84,14 @@ it("commits eligibility before publish and lets one competing worker claim", asy
   expect(batches.flat()).toHaveLength(1);
   const [message] = batches.flat();
   expect(message.jobId).toBe(job.id);
+  expect(
+    await db.job.findUniqueOrThrow({ where: { id: job.id } }),
+  ).toMatchObject({ status: "QUEUED" });
+  const events = await db.jobEvent.findMany({
+    where: { jobId: job.id, eventType: "JOB_QUEUED" },
+  });
+  expect(events).toHaveLength(1);
+  expect(events[0].details).toEqual({ attemptNo: 1 });
   const claims = await Promise.all([
     claimExecution(db, message, "one", 15_000),
     claimExecution(db, message, "two", 15_000),
@@ -116,6 +124,11 @@ it("releases expired dispatch ownership and fences expired execution tokens", as
   });
   const [recovered] = await leaseDispatches(db, lease);
   expect(recovered.id).toBe(staleDispatch.id);
+  expect(
+    await db.jobEvent.count({
+      where: { jobId: job.id, eventType: "JOB_QUEUED" },
+    }),
+  ).toBe(1);
   expect(await recordDispatch(db, staleDispatch)).toBe(0);
   expect(await recordDispatch(db, recovered)).toBe(1);
   const claim = await claimExecution(db, recovered, "expired", 15_000);

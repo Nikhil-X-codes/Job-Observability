@@ -4,6 +4,7 @@ import { z } from "zod";
 import { createSessions } from "./auth.js";
 import { HttpError, sendError } from "./http-errors.js";
 import {
+  externalJobTypes,
   idempotencyKey,
   jobId,
   parseListQuery,
@@ -61,7 +62,13 @@ function pagination(query) {
   return filters;
 }
 
-export function createV1Router(db, appOrigin, metrics, writeRateLimit = 60) {
+export function createV1Router(
+  db,
+  appOrigin,
+  metrics,
+  writeRateLimit = 60,
+  deliveryTenantId,
+) {
   const router = express.Router();
   const sessions = createSessions(db, appOrigin);
   const writeLimit = limiter(
@@ -88,12 +95,32 @@ export function createV1Router(db, appOrigin, metrics, writeRateLimit = 60) {
   router.use(sessions.authenticate);
   router.post("/auth/logout", writeLimit, sessions.logout);
   router.get("/me", (request, response) => response.json(request.user));
+  const canDeliver = (user) =>
+    user.role === "ADMIN" && user.tenantId === deliveryTenantId;
+  router.get("/job-capabilities", (request, response) =>
+    response.json({ externalDelivery: canDeliver(request.user) }),
+  );
 
   router.post("/jobs", writeLimit, readJson, async (request, response) => {
     const key = idempotencyKey.safeParse(request.get("Idempotency-Key"));
     const input = parseSubmission(request.body, new Date());
     if (!key.success || !input) {
       throw new HttpError(400, "INVALID_JOB", "Invalid job submission");
+    }
+    if (externalJobTypes.includes(input.type)) {
+      if (!canDeliver(request.user)) {
+        throw new HttpError(
+          403,
+          "DELIVERY_FORBIDDEN",
+          "External delivery is unavailable for this account",
+        );
+      }
+      if (!key.data)
+        throw new HttpError(
+          400,
+          "IDEMPOTENCY_REQUIRED",
+          "External delivery requires an Idempotency-Key header",
+        );
     }
     const result = await submitJob(db, request.user, input, key.data);
     if (result.conflict) {

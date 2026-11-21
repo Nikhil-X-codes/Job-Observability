@@ -21,13 +21,13 @@ const seconds = [0.025, 0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10, 30, 60, 300];
 export function createMetrics(db) {
   const register = new Registry();
   collectDefaultMetrics({ register, prefix: "jobflow_" });
-  const metric = (Type, name, help, labelNames = []) =>
+  const metric = (Type, name, help, labelNames = [], buckets = seconds) =>
     new Type({
       name,
       help,
       labelNames,
       registers: [register],
-      buckets: seconds,
+      buckets,
     });
   const attempts = metric(
     Counter,
@@ -76,6 +76,13 @@ export function createMetrics(db) {
     "outbox_dispatches_total",
     "Observed publication attempts",
     ["outcome"],
+  );
+  const dispatchDuration = metric(
+    Histogram,
+    "outbox_dispatch_stage_seconds",
+    "Elapsed time for dispatcher operations",
+    ["stage"],
+    [0.001, 0.0025, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10],
   );
   const requests = metric(
     Counter,
@@ -189,6 +196,7 @@ export function createMetrics(db) {
     workers,
     requests,
     dispatches,
+    dispatchDuration,
     terminalJob,
     committed,
     claimed: ({ type, startedAt, eligibleAt }) =>

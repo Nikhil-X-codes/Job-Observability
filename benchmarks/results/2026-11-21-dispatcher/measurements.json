@@ -1,0 +1,318 @@
+{
+  "rowWrites": {
+    "host": {
+      "os": "win32",
+      "release": "10.0.26300",
+      "cpu": "11th Gen Intel(R) Core(TM) i3-1115G4 @ 3.00GHz",
+      "logicalCores": 4,
+      "memoryBytes": 8317952000
+    },
+    "node": "v26.13.0",
+    "jobsPerTrial": 360,
+    "batchSize": 6,
+    "results": [
+      {
+        "trial": 1,
+        "mode": "serial",
+        "dispatchedPerSecond": 39.14,
+        "durationMs": 9198,
+        "leaseShareOfWallPercent": 30.9,
+        "stageMs": {
+          "lease": {
+            "samples": 60,
+            "p50": 36.457,
+            "p95": 117.436
+          },
+          "publish": {
+            "samples": 360,
+            "p50": 4.729,
+            "p95": 56.497
+          },
+          "record": {
+            "samples": 360,
+            "p50": 2.856,
+            "p95": 10.376
+          }
+        }
+      },
+      {
+        "trial": 2,
+        "mode": "pipeline",
+        "dispatchedPerSecond": 108.66,
+        "durationMs": 3313,
+        "leaseShareOfWallPercent": 72.2,
+        "stageMs": {
+          "lease": {
+            "samples": 60,
+            "p50": 35.559,
+            "p95": 61.654
+          },
+          "publish": {
+            "samples": 360,
+            "p50": 7.574,
+            "p95": 15.099
+          },
+          "record": {
+            "samples": 360,
+            "p50": 4.327,
+            "p95": 7.358
+          }
+        }
+      },
+      {
+        "trial": 3,
+        "mode": "pipeline",
+        "dispatchedPerSecond": 103.08,
+        "durationMs": 3493,
+        "leaseShareOfWallPercent": 75,
+        "stageMs": {
+          "lease": {
+            "samples": 60,
+            "p50": 41.63,
+            "p95": 60.429
+          },
+          "publish": {
+            "samples": 360,
+            "p50": 7.66,
+            "p95": 13.873
+          },
+          "record": {
+            "samples": 360,
+            "p50": 4.312,
+            "p95": 7.498
+          }
+        }
+      },
+      {
+        "trial": 4,
+        "mode": "serial",
+        "dispatchedPerSecond": 48.13,
+        "durationMs": 7479,
+        "leaseShareOfWallPercent": 27.5,
+        "stageMs": {
+          "lease": {
+            "samples": 60,
+            "p50": 30.114,
+            "p95": 51.42
+          },
+          "publish": {
+            "samples": 360,
+            "p50": 4.101,
+            "p95": 14.052
+          },
+          "record": {
+            "samples": 360,
+            "p50": 2.5,
+            "p95": 7.382
+          }
+        }
+      },
+      {
+        "trial": 5,
+        "mode": "serial",
+        "dispatchedPerSecond": 71.23,
+        "durationMs": 5054,
+        "leaseShareOfWallPercent": 46.3,
+        "stageMs": {
+          "lease": {
+            "samples": 60,
+            "p50": 35.333,
+            "p95": 53.364
+          },
+          "publish": {
+            "samples": 360,
+            "p50": 4.245,
+            "p95": 7.473
+          },
+          "record": {
+            "samples": 360,
+            "p50": 2.653,
+            "p95": 4.069
+          }
+        }
+      },
+      {
+        "trial": 6,
+        "mode": "pipeline",
+        "dispatchedPerSecond": 115.89,
+        "durationMs": 3106,
+        "leaseShareOfWallPercent": 73.8,
+        "stageMs": {
+          "lease": {
+            "samples": 60,
+            "p50": 35.06,
+            "p95": 52.259
+          },
+          "publish": {
+            "samples": 360,
+            "p50": 7.292,
+            "p95": 13.601
+          },
+          "record": {
+            "samples": 360,
+            "p50": 4.164,
+            "p95": 6.894
+          }
+        }
+      }
+    ]
+  },
+  "atomicBatch": {
+    "host": {
+      "os": "win32",
+      "release": "10.0.26300",
+      "cpu": "11th Gen Intel(R) Core(TM) i3-1115G4 @ 3.00GHz",
+      "logicalCores": 4,
+      "memoryBytes": 8317952000
+    },
+    "node": "v26.13.0",
+    "jobsPerTrial": 360,
+    "batchSize": 6,
+    "results": [
+      {
+        "trial": 1,
+        "mode": "serial",
+        "dispatchedPerSecond": 114.94,
+        "durationMs": 3132,
+        "leaseShareOfWallPercent": 9.4,
+        "stageMs": {
+          "lease": {
+            "samples": 60,
+            "p50": 4.417,
+            "p95": 7.655
+          },
+          "publish": {
+            "samples": 360,
+            "p50": 4.385,
+            "p95": 8.061
+          },
+          "record": {
+            "samples": 360,
+            "p50": 2.751,
+            "p95": 4.066
+          }
+        }
+      },
+      {
+        "trial": 2,
+        "mode": "pipeline",
+        "dispatchedPerSecond": 279.09,
+        "durationMs": 1290,
+        "leaseShareOfWallPercent": 25.6,
+        "stageMs": {
+          "lease": {
+            "samples": 60,
+            "p50": 4.841,
+            "p95": 8.728
+          },
+          "publish": {
+            "samples": 360,
+            "p50": 8.167,
+            "p95": 13.164
+          },
+          "record": {
+            "samples": 360,
+            "p50": 4.718,
+            "p95": 10.28
+          }
+        }
+      },
+      {
+        "trial": 3,
+        "mode": "pipeline",
+        "dispatchedPerSecond": 347.24,
+        "durationMs": 1037,
+        "leaseShareOfWallPercent": 26.1,
+        "stageMs": {
+          "lease": {
+            "samples": 60,
+            "p50": 4.311,
+            "p95": 5.851
+          },
+          "publish": {
+            "samples": 360,
+            "p50": 7.381,
+            "p95": 9.922
+          },
+          "record": {
+            "samples": 360,
+            "p50": 4.092,
+            "p95": 5.972
+          }
+        }
+      },
+      {
+        "trial": 4,
+        "mode": "serial",
+        "dispatchedPerSecond": 109.22,
+        "durationMs": 3296,
+        "leaseShareOfWallPercent": 12.4,
+        "stageMs": {
+          "lease": {
+            "samples": 60,
+            "p50": 4.628,
+            "p95": 8.479
+          },
+          "publish": {
+            "samples": 360,
+            "p50": 4.343,
+            "p95": 7.856
+          },
+          "record": {
+            "samples": 360,
+            "p50": 2.728,
+            "p95": 4.653
+          }
+        }
+      },
+      {
+        "trial": 5,
+        "mode": "serial",
+        "dispatchedPerSecond": 129.04,
+        "durationMs": 2790,
+        "leaseShareOfWallPercent": 9.3,
+        "stageMs": {
+          "lease": {
+            "samples": 60,
+            "p50": 4.035,
+            "p95": 5.223
+          },
+          "publish": {
+            "samples": 360,
+            "p50": 3.973,
+            "p95": 7.109
+          },
+          "record": {
+            "samples": 360,
+            "p50": 2.501,
+            "p95": 3.328
+          }
+        }
+      },
+      {
+        "trial": 6,
+        "mode": "pipeline",
+        "dispatchedPerSecond": 304.67,
+        "durationMs": 1182,
+        "leaseShareOfWallPercent": 26.3,
+        "stageMs": {
+          "lease": {
+            "samples": 60,
+            "p50": 4.721,
+            "p95": 7.201
+          },
+          "publish": {
+            "samples": 360,
+            "p50": 7.757,
+            "p95": 11.007
+          },
+          "record": {
+            "samples": 360,
+            "p50": 4.47,
+            "p95": 8.975
+          }
+        }
+      }
+    ]
+  }
+}

@@ -2,6 +2,7 @@ import { setTimeout as delay } from "node:timers/promises";
 import { queue } from "@jobflow/queue";
 import { runService } from "@jobflow/queue/service";
 import { handleDelivery, workerLabels } from "./delivery.js";
+import { createGateway } from "./gateway.js";
 
 async function consume(context) {
   const { channel, signal, disconnected, logger, workerId, metrics } = context;
@@ -47,4 +48,7 @@ async function consume(context) {
   }
 }
 
-await runService("worker", false, consume);
+const gateway = createGateway(process.env);
+await runService("worker", false, (context) =>
+  consume({ ...context, gateway }),
+);

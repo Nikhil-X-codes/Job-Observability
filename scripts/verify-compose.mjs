@@ -103,6 +103,52 @@ try {
       timeout: 120_000,
     },
   );
+  const archive = "/tmp/jobflow-restore-test.dump";
+  const restoredDb = "jobflow_restore_test";
+  const postgresExec = (...args) => compose("exec", "-T", "postgres", ...args);
+  const ledgerCounts = (database) =>
+    postgresExec(
+      "psql",
+      "-XAt",
+      "-v",
+      "ON_ERROR_STOP=1",
+      "-U",
+      "jobflow",
+      "-d",
+      database,
+      "-c",
+      `SELECT (SELECT count(*) FROM jobs),
+              (SELECT count(*) FROM attempts),
+              (SELECT count(*) FROM outbox_events),
+              (SELECT count(*) FROM job_events),
+              (SELECT count(*) FROM business_effects)`,
+    );
+  const sourceCounts = ledgerCounts("jobflow");
+  assert.ok(sourceCounts.split("|").every((count) => Number(count) > 0));
+  postgresExec(
+    "pg_dump",
+    "--format=custom",
+    "--file",
+    archive,
+    "-U",
+    "jobflow",
+    "jobflow",
+  );
+  postgresExec("createdb", "-U", "jobflow", restoredDb);
+  postgresExec(
+    "pg_restore",
+    "--exit-on-error",
+    "-U",
+    "jobflow",
+    "-d",
+    restoredDb,
+    archive,
+  );
+  assert.equal(ledgerCounts(restoredDb), sourceCounts);
+  console.log(
+    "PostgreSQL backup and restore preserved the fixture ledger counts.",
+  );
+
   compose(
     "exec",
     "-T",

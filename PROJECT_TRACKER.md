@@ -1,6 +1,6 @@
 # JobFlow Project Tracker
 
-**Status:** JobFlow has a verified dashboard refresh and measured native capacity, burst, and worker-crash results. The live Compose suite passed on GitHub Actions. AWS release remains deferred.
+**Status:** JobFlow has a public HTTPS demo on EC2, a verified dashboard refresh, and measured native capacity, burst, and worker-crash results. The live Compose suite passed on GitHub Actions. Deployed recovery and release operations are still pending verification.
 
 | Phase | State | Evidence (PR, test log, screenshots, URL) | Blocker |
 |---|---|---|---|
@@ -12,7 +12,7 @@
 | 05 Dashboard | DONE | Refreshed console verified in Chrome, including mobile layout, linked filters, and keyboard dismissal of the replay dialog. [Dashboard screenshot](docs/assets/jobflow-overview.png) | — |
 | 06 Observability | DONE | Native Prometheus scraped four processes and matched PostgreSQL completion counts. Grafana returned live rate and p95 queries. [Rendered dashboard](docs/assets/jobflow-grafana.png) | — |
 | 07 Benchmarks | DONE | 22 comparable capacity and burst runs reconciled 26,475 jobs. Five real worker crashes recovered with one effect each. [Report and per-run data](benchmarks/results/2026-11-20-native-capacity/REPORT.md) | Four-worker 70 jobs/s has one comparable trial and two retained overload diagnostics |
-| 08 AWS Release | DEFERRED | Offline production Compose verification exposed only web ports 80 and 443 | Final release stage, account, region, and budget |
+| 08 AWS Release | IN PROGRESS | [Public HTTPS demo](https://nikhil-jobflow.duckdns.org/) on EC2 in `ap-southeast-2`. API session boundary, private endpoint responses, and unrestricted inbound ports checked. [Release evidence](docs/phases/PHASE_08_AWS_RELEASE.md) | Deployed recovery, backup and restore, rollback, and budget evidence |
 | 09 Portfolio | DONE | Public source, green hosted CI, verified 2:22 [operator walkthrough](docs/assets/jobflow-demo.webm), screenshots, and [benchmark evidence](benchmarks/results/2026-11-20-native-mixed/REPORT.md) | Optional hosted demo is tracked in Phase 08 |
 
 ## Decisions
@@ -32,9 +32,47 @@
 ## Open decision log
 
 - [x] Publication destination selected. [GitHub repository](https://github.com/Nikhil-X-codes/Job-Observability)
-- [ ] AWS account plan/region and hard monthly budget (required before deployment)
-- [ ] Public domain for HTTPS (or an approved alternative)
+- [ ] Record the AWS project plan and monthly budget. Region is `ap-southeast-2`.
+- [x] Public hostname selected and verified over HTTPS. [Live demo](https://nikhil-jobflow.duckdns.org/)
 - [x] Exact Node, RabbitMQ, PostgreSQL, and Caddy image tags are pinned in [the Dockerfile](infra/Dockerfile) and [Compose configuration](infra/compose.yaml)
+
+## Remaining reliability and production work
+
+| Challenge | Acceptance check |
+| --- | --- |
+| Host or broker loss | Restore a populated PostgreSQL backup, replace the broker, and show that unclaimed jobs complete and preserve one effect per job. Verify restore and rollback from the deployment runbook. |
+| Dashboard lag | While Socket.IO is unavailable and REST is reachable, a visible job list shows a newly submitted job automatically. |
+| Backlog and worker scaling | Atomic PostgreSQL batch leasing raised median pipelined dispatch from 108.66 to 304.67 jobs/s in the isolated component benchmark. An end-to-end load comparison is still open. [Dispatcher report](benchmarks/results/2026-11-21-dispatcher/REPORT.md) |
+| Sandbox job integrations | Verified Resend acceptance and duplicate-key behavior. The account owner confirmed Delivered and Bounced in Resend for the matching JobFlow receipts. Verified one Webhook.site capture per success and forced-error job. |
+| Single-host availability | The local upgrade and rollback rehearsal preserved PostgreSQL and RabbitMQ. AWS restore and rollback are pending. A multi-host deployment requires a topology and budget decision. |
+
+## AWS candidate verification follow-up — 2026-11-21
+
+- **Backlog** — Added steady and burst acceptance checks for the release commit. No new end-to-end result was collected. The checkout contains uncommitted changes and k6 was unavailable on the current PATH. [Release candidate benchmark checks](docs/METRICS_AND_BENCHMARKS.md#verify-backlog-on-the-release-candidate)
+- **Sandbox** — Found the two existing Resend receipts in PostgreSQL. Read-only lookup returned HTTP 401 for each with the configured key. The account owner shared the matching Resend dashboard receipts showing `delivered` for `jobflow-email-success-001` and `bounced` for `jobflow-email-bounce-001`. [Delivery verification steps](docs/AWS_DEPLOYMENT.md#enable-the-external-delivery-gateway)
+- **Checks** — Lint, formatting, 49 unit tests, and the web build passed. No AWS deployment was performed.
+
+## Provider receipts, dispatch capacity, and rollback — 2026-11-21
+
+- **Live sandbox** — The local admin submitted the approved fixtures. Resend accepted two email jobs. Repeating the success job's key returned the same receipt. The sending key returned HTTP 401 for event lookup. Webhook.site confirmed exactly one capture per case. The success job completed and the `503` job reached `DEAD` on attempt one.
+- **Backlog** — Six trials per lease implementation reconciled 4,320 dispatches total. The old leasing path accounted for a median 73.8% of pipelined wall time. Atomic SQL batch leasing reduced median run p95 lease time from 60.43 ms to 7.20 ms. [Benchmark and measurements](benchmarks/results/2026-11-21-dispatcher/REPORT.md)
+- **Rollback** — Using two retained local image builds and a disposable production-shaped Compose project, the release script restored the earlier API image. API readiness, PostgreSQL and RabbitMQ container identity, and the persisted database marker were checked. [Release runbook](docs/AWS_DEPLOYMENT.md#update-the-existing-ec2-demo)
+- **Commands and results** — Lint, format check, 49 unit tests, build, 5 broker tests, 8 API tests, and 5 processing failure tests passed after the batch change. The failure suite verified one queued audit event across competing lease claims and re-leasing. The AWS demo has not been updated in this session.
+
+## Recovery and dashboard follow-up — 2026-11-21
+
+- **Phases** — Phase 08 recovery and Phase 05 dashboard. Changes are in the working tree based on `fbc104a`.
+- **Changes made** — Added the offline repair for confirmed, unclaimed dispatches when replacing a broker. Added a PostgreSQL backup and restore check to the Compose harness and an isolated lost-delivery broker regression. Visible dashboards refresh from REST every 15 seconds while online.
+- **Commands and results** — Lint, formatting, 35 unit tests, and the web build passed. A local Docker fixture with a temporary RabbitMQ resource override passed 4 broker tests, 7 REST integration tests, and 5 processing failure tests. The restored database matched the source on 20 jobs, 12 attempts, 21 outbox records, 58 job events, and 11 effect records. The original Compose command timed out during the cold build, and a warm rerun stopped on RabbitMQ startup.
+- **Browser evidence** — `npm run test:ui` passed against a separate database and broker vhost. A newly submitted job appeared while Socket.IO requests were blocked and REST was available. The dashboard returned to its live state after the block was removed.
+- **Open issues** — The live AWS host still needs a deployment smoke test and backup, restore, and rollback exercises. Benchmarking with a separate generator and provider selection for real integrations are open. [Recovery runbook](docs/AWS_DEPLOYMENT.md#recover-when-rebuilding-rabbitmq)
+
+## Delivery sandbox and release follow-up — 2026-11-21
+
+- **Scope** — Added one-tenant administrator delivery for the approved Resend and Webhook.site fixtures. Simulated jobs remain available. Resend retries use the same key and payload for up to 23 hours after eligibility. Webhook.site jobs submit at most once in the active database because the capture endpoint does not provide job-key deduplication.
+- **Commands and results** — Lint, formatting, 49 unit tests, and the web build passed. Fresh local PostgreSQL and RabbitMQ fixtures passed 5 broker, 8 API, and 5 processing failure tests with the sandbox adapters. The broker test recorded two Resend attempts with one key after a simulated lost response and one committed JobFlow effect. A dummy production Compose render verified worker-only provider settings and kept ports 80 and 443 on the web service.
+- **Browser evidence** — Chrome verified the enabled admin's fixture and recipient selectors, the one-attempt webhook notice, and the existing simulated job and dashboard workflows.
+- **Release and recovery evidence** — Before the sandbox adapter change, `npm run test:integration` passed the normal Compose startup and dependency outage checks, populated PostgreSQL backup and restore, and the broker, API, and failure suites after switching RabbitMQ health checks to a TCP probe. Script-level rollback checks passed with a mocked Docker CLI. A production-like local rehearsal stopped at API readiness before rollback. The live release, live sandbox receipts, and end-to-end AWS rollback still need verification. [Sandbox setup and release steps](docs/AWS_DEPLOYMENT.md#enable-the-external-delivery-gateway)
 
 ## Observability README — 2026-11-21
 

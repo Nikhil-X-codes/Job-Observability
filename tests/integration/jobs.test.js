@@ -91,6 +91,112 @@ it("scopes sign-in, checks origin, and invalidates sessions at logout", async ()
   await api.get("/api/v1/me").set("Cookie", session).expect(401);
 });
 
+it("permits external delivery only for the configured tenant administrator with a key", async () => {
+  const body = {
+    type: "SEND_EMAIL",
+    payload: {
+      templateId: "jobflow-email-success-001",
+      recipientId: "delivered",
+    },
+  };
+  await submit(first.session, "delivery-disabled", body).expect(403);
+
+  const enabled = supertest(
+    createApp(
+      logger,
+      undefined,
+      createV1Router(db, origin, undefined, 60, first.id),
+    ),
+  );
+  const request = (cookie) =>
+    enabled.post("/api/v1/jobs").set("Origin", origin).set("Cookie", cookie);
+  await enabled
+    .get("/api/v1/job-capabilities")
+    .set("Cookie", first.session)
+    .expect(200, { externalDelivery: true });
+  await enabled
+    .get("/api/v1/job-capabilities")
+    .set("Cookie", second.session)
+    .expect(200, { externalDelivery: false });
+  await request(second.session)
+    .set("Idempotency-Key", "delivery-other")
+    .send(body)
+    .expect(403);
+  const memberEmail = "delivery-member@example.test";
+  await db.user.create({
+    data: {
+      tenantId: first.id,
+      email: memberEmail,
+      passwordHash: await hashPassword(password),
+      role: "MEMBER",
+    },
+  });
+  const member = await enabled
+    .post("/api/v1/auth/login")
+    .set("Origin", origin)
+    .send({ tenant: first.slug, email: memberEmail, password })
+    .expect(200);
+  await request(member.headers["set-cookie"][0].split(";")[0])
+    .set("Idempotency-Key", "delivery-member")
+    .send(body)
+    .expect(403);
+  await request(first.session).send(body).expect(400);
+  await request(first.session)
+    .set("Idempotency-Key", "delivery-url")
+    .send({
+      type: "DELIVER_WEBHOOK",
+      payload: {
+        eventId: "jobflow-webhook-retry-001",
+        destinationId: "webhook-site",
+        url: "https://example.test",
+      },
+    })
+    .expect(400);
+  const webhook = {
+    type: "DELIVER_WEBHOOK",
+    payload: {
+      eventId: "jobflow-webhook-retry-001",
+      destinationId: "webhook-site",
+    },
+  };
+  await request(first.session)
+    .set("Idempotency-Key", "webhook-repeat")
+    .send({ ...webhook, maxAttempts: 2 })
+    .expect(400);
+  const acceptedWebhook = await request(first.session)
+    .set("Idempotency-Key", "webhook-once")
+    .send(webhook)
+    .expect(202);
+  expect(acceptedWebhook.body.maxAttempts).toBe(1);
+  const firstJob = await request(first.session)
+    .set("Idempotency-Key", "delivery-approved")
+    .send(body)
+    .expect(202);
+  const duplicate = await request(first.session)
+    .set("Idempotency-Key", "delivery-approved")
+    .send(body)
+    .expect(202);
+  expect(firstJob.body.id).toBe(duplicate.body.id);
+  const [, letter] = await db.$transaction([
+    db.job.update({
+      where: { id: firstJob.body.id },
+      data: { status: "DEAD", finishedAt: new Date() },
+    }),
+    db.deadLetter.create({
+      data: { jobId: firstJob.body.id, lastErrorCode: "PERMANENT" },
+    }),
+  ]);
+  await enabled
+    .post(`/api/v1/admin/dlq/${letter.id}/replay`)
+    .set("Origin", origin)
+    .set("Cookie", first.session)
+    .send({ reason: "Check duplicate protection" })
+    .expect(409);
+  expect(await db.job.count({ where: { replayOfId: firstJob.body.id } })).toBe(
+    0,
+  );
+});
+
 it("commits one job, one outbox message, and one event for concurrent matching submissions", async () => {
   const [a, b] = await Promise.all([
     submit(first.session, "parallel").expect(202),

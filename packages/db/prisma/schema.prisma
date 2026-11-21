@@ -27,6 +27,8 @@ enum JobType {
   GENERATE_REPORT
   SIMULATE_EMAIL
   MOCK_WEBHOOK
+  SEND_EMAIL
+  DELIVER_WEBHOOK
 }
 
 enum Priority {

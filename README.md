@@ -9,7 +9,7 @@ JobFlow runs asynchronous jobs and gives tenant administrators an operator conso
 ## Administrator workflow
 
 1. **Start with Overview.** Check job counts by state and completions in the last minute. Follow the links to jobs waiting for retry or jobs that reached the dead-letter queue.
-2. **Investigate a job.** Open its attempt history and event timeline to see when it started, what error category was recorded, and whether another attempt is scheduled. Socket.IO refreshes the dashboard as jobs change. The browser refreshes from the REST API on reconnect.
+2. **Investigate a job.** Open its attempt history and event timeline to see when it started, what error category was recorded, and whether another attempt is scheduled. Socket.IO refreshes the dashboard as jobs change. A visible dashboard also refreshes from REST every 15 seconds while the browser is online, and refreshes on reconnect.
 3. **Replay a dead letter.** Enter a reason to create a new job linked to the original. The original history is preserved, and the API allows one replay per dead letter.
 4. **Check Grafana for system-wide symptoms.** Compare queue wait, retries, outbox age, and worker activity to see where a backlog is forming.
 
@@ -79,6 +79,8 @@ The Express API commits each accepted job and its publication intent together in
 
 The dashboard uses React, Vite, and Socket.IO. The processing services use Node.js with JavaScript ESM, PostgreSQL with Prisma, and RabbitMQ. Docker Compose runs the stack, and Caddy serves the production frontend and proxies API traffic. [Architecture and failure modes](docs/ARCHITECTURE.md)
 
+The seeded demo uses simulated email and webhook jobs. A configured delivery tenant can enable **Send email** and **Deliver webhook** for administrators using Resend test recipients and a private Webhook.site URL. [Enable external delivery](docs/AWS_DEPLOYMENT.md#enable-the-external-delivery-gateway)
+
 ## Verify and deploy
 
 ```sh
@@ -93,4 +95,6 @@ The integration suite uses isolated Docker Compose services. The native monitori
 
 The capacity and burst report reconciled **26,475 jobs across 22 comparable native trials**. In five separate controlled worker-crash trials, median recovery was **16.270 seconds**, with one committed effect per recovered job. The reports record the Windows host, workload, timing windows, and overload diagnostics. [Capacity, burst, and crash recovery](benchmarks/results/2026-11-20-native-capacity/REPORT.md) · [Fixed-rate worker comparison](benchmarks/results/2026-11-20-native-mixed/REPORT.md)
 
-AWS deployment remains deferred. The repository includes a production Compose overlay, a manual release workflow, and a single-EC2 deployment runbook with HTTPS, backup, and cleanup steps. [AWS deployment runbook](docs/AWS_DEPLOYMENT.md) · [Phase 08 release status](docs/phases/PHASE_08_AWS_RELEASE.md) · [Project tracker](PROJECT_TRACKER.md)
+An isolated dispatcher benchmark measured how each stage handled a preloaded backlog. Atomic batch leasing increased median pipelined dispatch from **108.66 to 304.67 jobs/s** on the local fixture. [Dispatcher benchmark](benchmarks/results/2026-11-21-dispatcher/REPORT.md)
+
+The demo is live on one EC2 instance in Sydney. Public HTTPS and the sign-in boundary have been checked. Deployed job recovery, backup and restore, and rollback still need verification. [Live JobFlow demo](https://nikhil-jobflow.duckdns.org/) · [Update the existing EC2 demo](docs/AWS_DEPLOYMENT.md#update-the-existing-ec2-demo) · [Phase 08 release status](docs/phases/PHASE_08_AWS_RELEASE.md)

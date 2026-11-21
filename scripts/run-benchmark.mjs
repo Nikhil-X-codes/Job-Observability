@@ -181,6 +181,8 @@ async function sampleMetrics(startedAt, endedAt) {
     rss: "jobflow_process_resident_memory_bytes",
     states: "job_state_count",
     outboxLag: "outbox_oldest_due_seconds",
+    dispatchStageP95:
+      "histogram_quantile(0.95, sum by (le, stage) (rate(outbox_dispatch_stage_seconds_bucket[15s])))",
   };
   const entries = await Promise.all(
     Object.entries(queries).map(async ([name, query]) => {

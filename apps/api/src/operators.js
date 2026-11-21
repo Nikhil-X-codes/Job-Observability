@@ -1,5 +1,5 @@
 import { HttpError } from "./http-errors.js";
-import { parseSubmission } from "./job-input.js";
+import { externalJobTypes, parseSubmission } from "./job-input.js";
 import { publicJob, submitJob } from "./jobs.js";
 
 export async function cancelJob(db, user, id) {
@@ -51,6 +51,13 @@ export async function replayJob(db, user, letterId, reason) {
           maxAttempts: true,
         },
       });
+    if (externalJobTypes.includes(type)) {
+      throw new HttpError(
+        409,
+        "REPLAY_INVALID",
+        "Reconcile the external delivery before submitting another job",
+      );
+    }
     const input = parseSubmission(
       { type, payload, priority, maxAttempts },
       entry.now,

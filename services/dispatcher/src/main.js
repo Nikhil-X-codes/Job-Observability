@@ -17,6 +17,15 @@ function retryDelay(retryCount) {
   );
 }
 
+async function timeStage(metrics, stage, operation) {
+  const done = metrics.dispatchDuration.startTimer({ stage });
+  try {
+    return await operation();
+  } finally {
+    done();
+  }
+}
+
 async function dispatch({
   db,
   logger,
@@ -27,27 +36,32 @@ async function dispatch({
 }) {
   const stopped = AbortSignal.any([signal, disconnected]);
   while (!stopped.aborted) {
-    const batch = await leaseDispatches(db, { limit, leaseMs });
-    for (const item of batch) {
-      if (stopped.aborted) break;
-      try {
-        await publishDispatch(channel, item);
-      } catch {
-        await retryDispatch(db, item, retryDelay(item.retryCount));
-        metrics.dispatches.inc({ outcome: "retry" });
-        logger.warn(
-          { jobId: item.jobId, attemptNo: item.attemptNo },
-          "Dispatch will retry",
-        );
-        continue;
-      }
-      await recordDispatch(db, item);
-      metrics.dispatches.inc({ outcome: "confirmed" });
-      logger.info(
-        { jobId: item.jobId, attemptNo: item.attemptNo },
-        "Dispatch confirmed",
-      );
-    }
+    const batch = await timeStage(metrics, "lease", () =>
+      leaseDispatches(db, { limit, leaseMs }),
+    );
+    if (stopped.aborted) return;
+    const outcomes = await Promise.allSettled(
+      batch.map(async (item) => {
+        const fields = { jobId: item.jobId, attemptNo: item.attemptNo };
+        try {
+          await timeStage(metrics, "publish", () =>
+            publishDispatch(channel, item),
+          );
+        } catch {
+          await timeStage(metrics, "retry", () =>
+            retryDispatch(db, item, retryDelay(item.retryCount)),
+          );
+          metrics.dispatches.inc({ outcome: "retry" });
+          logger.warn(fields, "Dispatch will retry");
+          return;
+        }
+        await timeStage(metrics, "record", () => recordDispatch(db, item));
+        metrics.dispatches.inc({ outcome: "confirmed" });
+        logger.info(fields, "Dispatch confirmed");
+      }),
+    );
+    const failure = outcomes.find(({ status }) => status === "rejected");
+    if (failure) throw failure.reason;
     if (batch.length < limit && !stopped.aborted) {
       await delay(250, undefined, { signal: stopped }).catch((error) => {
         if (!stopped.aborted) throw error;

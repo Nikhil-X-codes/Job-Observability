@@ -1,4 +1,5 @@
 import { setTimeout as delay } from "node:timers/promises";
+import { DeliveryError } from "./gateway.js";
 
 const handlers = {
   async GENERATE_REPORT({ reportId }, signal) {
@@ -15,7 +16,12 @@ const handlers = {
   },
 };
 
-export function runHandler({ type, payload }, signal) {
+export function runHandler(job, signal, gateway) {
+  const { type, payload } = job;
+  if (type === "SEND_EMAIL" || type === "DELIVER_WEBHOOK") {
+    if (!gateway) throw new DeliveryError("PERMANENT");
+    return gateway(job, signal);
+  }
   if (!Object.hasOwn(handlers, type)) throw new Error("Unsupported job type");
   return handlers[type](payload, signal);
 }

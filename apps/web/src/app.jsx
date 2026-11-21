@@ -99,9 +99,18 @@ function useLive(sessionId) {
     const socket = io({ autoConnect: false });
     let refresh;
     const reconcile = () => {
-      clearTimeout(refresh);
-      refresh = setTimeout(() => setRevision((value) => value + 1), 200);
+      refresh ??= setTimeout(() => {
+        refresh = undefined;
+        setRevision((value) => value + 1);
+      }, 200);
     };
+    const reconcileVisible = () => {
+      if (document.visibilityState === "visible" && navigator.onLine)
+        reconcile();
+    };
+    const fallback = setInterval(reconcileVisible, 15_000);
+    document.addEventListener("visibilitychange", reconcileVisible);
+    window.addEventListener("online", reconcileVisible);
     const disconnected = () => setLive(false);
     socket.on("connect", () => {
       setLive(true);
@@ -114,6 +123,9 @@ function useLive(sessionId) {
     socket.connect();
     return () => {
       clearTimeout(refresh);
+      clearInterval(fallback);
+      document.removeEventListener("visibilitychange", reconcileVisible);
+      window.removeEventListener("online", reconcileVisible);
       socket.removeAllListeners();
       socket.disconnect();
       setLive(false);

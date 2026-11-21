@@ -138,7 +138,18 @@ try {
   const origin = `http://127.0.0.1:${webPort}`;
   const metrics = createMetrics(db);
   const server = createServer(
-    createApp(logger, undefined, createV1Router(db, origin, metrics), metrics),
+    createApp(
+      logger,
+      undefined,
+      createV1Router(
+        db,
+        origin,
+        metrics,
+        60,
+        recording ? undefined : tenant.id,
+      ),
+      metrics,
+    ),
   );
   stopRealtime = attachRealtime(server, { db, appOrigin: origin, logger });
   server.listen(0, "127.0.0.1");
@@ -183,6 +194,25 @@ try {
     "",
   );
   await page.getByRole("link", { name: "New job" }).click();
+  if (!recording) {
+    const jobType = page.getByLabel("Job type");
+    await jobType
+      .locator('option[value="SEND_EMAIL"]')
+      .waitFor({ state: "attached" });
+    await jobType.selectOption("SEND_EMAIL");
+    assert.equal(
+      await page.getByLabel("Email fixture ID").inputValue(),
+      "jobflow-email-success-001",
+    );
+    await page.getByLabel("Recipient scenario").selectOption("complained");
+    await jobType.selectOption("DELIVER_WEBHOOK");
+    assert.equal(
+      await page.getByLabel("Destination ID").inputValue(),
+      "webhook-site",
+    );
+    await page.getByText("Webhook.site fixtures use one attempt.").waitFor();
+    await jobType.selectOption("GENERATE_REPORT");
+  }
   await page.getByLabel("Report ID").fill("browser-report");
   await page.getByRole("button", { name: "Submit job" }).click();
   await page.locator('[data-status="PENDING"]').waitFor();
@@ -274,6 +304,26 @@ try {
   );
   assert.match(await scrape.text(), /job_state_count\{status="DEAD"\} 1/);
 
+  if (!recording) {
+    const socketRequests = "**/socket.io/**";
+    await page.route(socketRequests, (route) => route.abort());
+    await page.reload();
+    await page.getByText("Reconnecting", { exact: true }).waitFor();
+    await page.getByRole("link", { name: "Simulate email" }).waitFor();
+    const fallbackJob = await seedJob("GENERATE_REPORT", {
+      reportId: "browser-rest-fallback",
+    });
+    await page
+      .locator(`a[href="/jobs/${fallbackJob.id}"]`)
+      .waitFor({ timeout: 20_000 });
+    assert.equal(
+      await page.getByText("Reconnecting", { exact: true }).isVisible(),
+      true,
+    );
+    await page.unroute(socketRequests);
+    await page.getByText("Live", { exact: true }).waitFor();
+  }
+
   await page.getByRole("link", { name: "Overview" }).click();
   await page.getByRole("heading", { name: "Jobs by status" }).waitFor();
   await holdFrame(page, "The dashboard reloads job state after reconnecting.");
@@ -288,7 +338,7 @@ try {
   );
   await page.getByRole("link", { name: "Jobs", exact: true }).click();
   await page.getByRole("heading", { name: "Jobs", exact: true }).waitFor();
-  await page.getByRole("link", { name: "Generate report" }).waitFor();
+  await page.getByRole("link", { name: "Generate report" }).first().waitFor();
   await page.waitForFunction(
     () => document.documentElement.scrollWidth <= innerWidth,
   );
