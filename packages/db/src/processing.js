@@ -3,12 +3,15 @@ import { retryDelay } from "./retry.js";
 
 export async function leaseDispatches(db, { limit, leaseMs }) {
   const lockToken = randomUUID();
-  return db.$transaction(async (tx) => {
-    const rows = await tx.$queryRaw`
-      SELECT o.id, o.aggregate_id AS "jobId", o.attempt_no AS "attemptNo",
-             o.retry_count AS "retryCount", j.status AS "jobStatus", j.priority,
-             j.attempt_number AS "previousAttempts", j.max_attempts AS "maxAttempts",
-             j.next_run_at AS "nextRunAt", statement_timestamp() AS "claimedAt"
+  return db.$queryRaw`
+    WITH candidates AS MATERIALIZED (
+      SELECT o.id, o.aggregate_id, o.attempt_no, o.available_at, j.priority,
+             j.status AS job_status,
+             (j.status IN ('PENDING', 'RETRY_WAIT', 'QUEUED')
+              AND j.next_run_at IS NOT NULL
+              AND j.next_run_at <= statement_timestamp()
+              AND o.attempt_no = j.attempt_number + 1
+              AND o.attempt_no <= j.max_attempts) AS eligible
       FROM outbox_events o JOIN jobs j ON j.id = o.aggregate_id
       WHERE o.topic = 'job.dispatch' AND o.status = 'PENDING'
         AND o.available_at <= statement_timestamp()
@@ -16,59 +19,31 @@ export async function leaseDispatches(db, { limit, leaseMs }) {
       ORDER BY o.available_at, o.id
       LIMIT ${limit}
       FOR UPDATE OF o, j SKIP LOCKED
-    `;
-    const leased = [];
-    for (const row of rows) {
-      const { id, jobId, attemptNo, retryCount, claimedAt } = row;
-      const due =
-        row.nextRunAt !== null &&
-        row.nextRunAt <= claimedAt &&
-        attemptNo === row.previousAttempts + 1 &&
-        attemptNo <= row.maxAttempts;
-      const eligible = ["PENDING", "RETRY_WAIT", "QUEUED"].includes(
-        row.jobStatus,
-      );
-      if (!due || !eligible) {
-        await tx.outboxEvent.update({
-          where: { id },
-          data: { status: "SUPERSEDED", lockToken: null, lockedUntil: null },
-        });
-        continue;
-      }
-      await tx.outboxEvent.update({
-        where: { id },
-        data: {
-          lockToken,
-          lockedUntil: new Date(claimedAt.getTime() + leaseMs),
-        },
-      });
-      if (row.jobStatus !== "QUEUED") {
-        await tx.job.update({
-          where: { id: jobId },
-          data: {
-            status: "QUEUED",
-            updatedAt: claimedAt,
-            events: {
-              create: {
-                eventType: "JOB_QUEUED",
-                details: { attemptNo },
-                occurredAt: claimedAt,
-              },
-            },
-          },
-        });
-      }
-      leased.push({
-        id,
-        jobId,
-        attemptNo,
-        retryCount,
-        priority: row.priority,
-        lockToken,
-      });
-    }
-    return leased;
-  });
+    ), leased AS (
+      UPDATE outbox_events o
+      SET status = CASE WHEN c.eligible THEN 'PENDING'::"OutboxStatus"
+                        ELSE 'SUPERSEDED'::"OutboxStatus" END,
+          lock_token = CASE WHEN c.eligible THEN ${lockToken}::uuid END,
+          locked_until = CASE WHEN c.eligible
+            THEN statement_timestamp() + ${leaseMs}::int * interval '1 millisecond' END
+      FROM candidates c WHERE o.id = c.id
+      RETURNING o.id, o.retry_count, o.lock_token
+    ), queued AS (
+      UPDATE jobs j SET status = 'QUEUED', updated_at = statement_timestamp()
+      FROM candidates c
+      WHERE j.id = c.aggregate_id AND c.eligible AND c.job_status <> 'QUEUED'
+      RETURNING j.id, c.attempt_no, j.updated_at
+    ), audited AS (
+      INSERT INTO job_events (job_id, event_type, details, occurred_at)
+      SELECT id, 'JOB_QUEUED', jsonb_build_object('attemptNo', attempt_no), updated_at
+      FROM queued
+    )
+    SELECT c.id, c.aggregate_id AS "jobId", c.attempt_no AS "attemptNo",
+           l.retry_count AS "retryCount", c.priority, l.lock_token AS "lockToken"
+    FROM candidates c JOIN leased l ON l.id = c.id
+    WHERE c.eligible
+    ORDER BY c.available_at, c.id
+  `;
 }
 
 export async function recordDispatch(db, dispatch) {
@@ -106,8 +81,8 @@ export async function claimExecution(
       WHERE j.id = prior.id AND j.status = 'QUEUED'
         AND j.next_run_at <= clock_timestamp()
         AND attempt_number + 1 = ${attemptNo}::int AND attempt_number < max_attempts
-      RETURNING j.id AS "jobId", type, payload, attempt_number AS "attemptNo",
-        max_attempts AS "maxAttempts", lease_token AS token, updated_at AS "startedAt",
+      RETURNING j.id AS "jobId", j.tenant_id AS "tenantId", type, payload, attempt_number AS "attemptNo",
+        max_attempts AS "maxAttempts", lease_token AS token, updated_at AS "startedAt", run_at AS "runAt",
         created_at AS "createdAt", prior.next_run_at AS "eligibleAt"
     `;
     if (!lease) return null;

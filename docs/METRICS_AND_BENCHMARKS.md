@@ -33,6 +33,7 @@ Use the recorded workload, hardware, window, and denominators when citing measur
 - Gauge `job_state_count{status}` (generated periodically from DB).
 - Gauge `worker_active_jobs{worker_group}`.
 - Gauge `outbox_pending_count`.
+- Histogram `outbox_dispatch_stage_seconds{stage}` records PostgreSQL batch leasing, RabbitMQ publish-to-confirm, recording a confirmation in PostgreSQL, and recording a retry. Lease samples include empty polls, and stage timings include failed operations.
 
 No `jobId`, `tenantId`, email, request UUID or high-cardinality labels. Use distinct scrape targets per worker and aggregate; never aggregate histograms via averaging p95 values. Histograms need bucket ranges matching observed workload.
 
@@ -48,6 +49,12 @@ Example p95 execution seconds:
 
 ```promql
 histogram_quantile(0.95, sum by (le) (rate(job_execution_duration_seconds_bucket[5m])))
+```
+
+Compare dispatcher stages during an interval with a sustained backlog. The `lease` series measures batches. The `publish`, `record`, and `retry` series measure individual jobs.
+
+```promql
+histogram_quantile(0.95, sum by (le, stage) (rate(outbox_dispatch_stage_seconds_bucket[1m])))
 ```
 
 ## Benchmark methodology (Phase 07)
@@ -72,6 +79,12 @@ Use a clean Git checkout and an isolated benchmark tenant with seeded credential
 Run `npm run test:load`. Defaults are 1, 2, 4, and 8 workers, three repetitions, a 15-second warmup, then a 60-second measured run. Use `BENCHMARK_WORKERS`, `BENCHMARK_REPETITIONS`, `BENCHMARK_RATE`, `BENCHMARK_DURATION`, and `BENCHMARK_WORKLOAD` to select a comparable workload. The workload choices are `report`, `io`, and `mixed`. Keep configuration fixed when comparing worker counts.
 
 The runner exports HTTP latency, PostgreSQL job and effect reconciliation, per-second arrival and completion counts, and Prometheus CPU and memory samples under `benchmarks/results/local/`. It anchors the measurement window to the k6 scenario start and counts durable job transitions within the configured arrival duration. Jobs that finish during drain appear separately. Each formal comparison should cover three or more repetitions per condition. [k6 arrival-rate model](https://grafana.com/docs/k6/latest/using-k6/scenarios/executors/constant-arrival-rate/) · [k6 scenario clock](https://grafana.com/docs/k6/latest/javascript-api/k6-execution/)
+
+### Verify backlog on the release candidate
+
+Run from a clean checkout of the exact commit going to AWS. Use a disposable stack and the synthetic mixed workload. Start with the expected demo traffic rate and the worker count you plan to deploy. Repeat the steady profile and the burst profile three times. For a before-and-after comparison, run the baseline and candidate with the same hardware, worker count, and arrival profile.
+
+Compare `results.json` across runs. At the target steady rate, completions should keep pace with accepted submissions and the backlog should stabilize. After each burst, verify that the queue drains within the runner's 120-second drain window. Each run should report zero rejected submissions, remaining jobs, dead jobs, duplicate effects, and completed jobs with missing effects. Start with zero allowed k6 drops. Investigate generator saturation before using a run to set a capacity limit. Record completions per second, peak backlog, time to drain, and p95 first-claim and end-to-end latency. Apply the measured capacity only to the tested hardware and configuration.
 
 ### Capacity, burst, and crash profiles
 

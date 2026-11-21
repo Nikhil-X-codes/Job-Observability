@@ -41,3 +41,31 @@ it("rejects malformed and excess-sized delivery envelopes", () => {
   expect(decodeDelivery(Buffer.alloc(257))).toBeNull();
   expect(decodeDelivery(Buffer.from(JSON.stringify(dispatch)))).toBeNull();
 });
+
+it("isolates concurrent confirms and ignores a return for a previous lease", async () => {
+  const channel = new EventEmitter();
+  const pending = new Map();
+  channel.sendToQueue = (_queue, _content, { messageId }, confirm) =>
+    pending.set(messageId, confirm);
+  const current = { ...dispatch, lockToken: randomUUID() };
+  const other = { ...dispatch, id: randomUUID(), lockToken: randomUUID() };
+  const result = Promise.allSettled([
+    publishDispatch(channel, current),
+    publishDispatch(channel, other),
+  ]);
+  channel.emit("return", {
+    properties: { messageId: `${current.id}:expired` },
+  });
+  channel.emit("return", {
+    properties: { messageId: `${other.id}:${other.lockToken}` },
+  });
+  for (const confirm of pending.values()) confirm(null);
+  const [accepted, rejected] = await result;
+  expect(accepted.status).toBe("fulfilled");
+  expect(rejected).toMatchObject({
+    status: "rejected",
+    reason: expect.any(Error),
+  });
+  expect(rejected.reason.message).toContain("unroutable");
+  expect(channel.listenerCount("return")).toBe(0);
+});

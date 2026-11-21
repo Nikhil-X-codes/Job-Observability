@@ -19,6 +19,8 @@ const envSchema = z.object({
     .default("http://127.0.0.1:5173"),
   WRITE_RATE_LIMIT: z.coerce.number().int().min(1).max(100_000).default(60),
   TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(1).default(0),
+  DELIVERY_TENANT_ID: z.uuid().optional(),
+  DELIVERY_ACCEPT_NEW: z.enum(["0", "1"]).default("1"),
 });
 
 export function readConfig(env) {
@@ -36,5 +38,9 @@ export function readConfig(env) {
     appOrigin: result.data.APP_ORIGIN,
     writeRateLimit: result.data.WRITE_RATE_LIMIT,
     trustProxyHops: result.data.TRUST_PROXY_HOPS,
+    deliveryTenantId:
+      result.data.DELIVERY_ACCEPT_NEW === "1"
+        ? result.data.DELIVERY_TENANT_ID
+        : undefined,
   };
 }

@@ -14,6 +14,14 @@ const fields = {
   maxAttempts: z.number().int().min(1).max(5).default(3),
   runAt: z.iso.datetime().optional(),
 };
+export const externalJobTypes = Object.freeze([
+  "SEND_EMAIL",
+  "DELIVER_WEBHOOK",
+]);
+const emailPayload = z.strictObject({
+  templateId: identifier,
+  recipientId: identifier,
+});
 
 const input = z.discriminatedUnion("type", [
   z.strictObject({
@@ -23,16 +31,36 @@ const input = z.discriminatedUnion("type", [
   }),
   z.strictObject({
     type: z.literal("SIMULATE_EMAIL"),
-    payload: z.strictObject({
-      templateId: identifier,
-      recipientId: identifier,
-    }),
+    payload: emailPayload,
     ...fields,
   }),
   z.strictObject({
     type: z.literal("MOCK_WEBHOOK"),
     payload: z.strictObject({ eventId: identifier }),
     ...fields,
+  }),
+  z.strictObject({
+    type: z.literal("SEND_EMAIL"),
+    payload: z.strictObject({
+      templateId: z.enum([
+        "jobflow-email-success-001",
+        "jobflow-email-bounce-001",
+      ]),
+      recipientId: z.enum(["delivered", "bounced", "complained"]),
+    }),
+    ...fields,
+  }),
+  z.strictObject({
+    type: z.literal("DELIVER_WEBHOOK"),
+    payload: z.strictObject({
+      eventId: z.enum([
+        "jobflow-webhook-success-001",
+        "jobflow-webhook-retry-001",
+      ]),
+      destinationId: z.literal("webhook-site"),
+    }),
+    ...fields,
+    maxAttempts: z.literal(1).default(1),
   }),
 ]);
 
@@ -73,7 +101,12 @@ const listFilters = z.strictObject({
     ])
     .optional(),
   type: z
-    .enum(["GENERATE_REPORT", "SIMULATE_EMAIL", "MOCK_WEBHOOK"])
+    .enum([
+      "GENERATE_REPORT",
+      "SIMULATE_EMAIL",
+      "MOCK_WEBHOOK",
+      ...externalJobTypes,
+    ])
     .optional(),
   cursor: z
     .string()

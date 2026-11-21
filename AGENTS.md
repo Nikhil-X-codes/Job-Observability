@@ -27,6 +27,7 @@ Implement **JobFlow**, a JavaScript-only, full-stack distributed job processor u
 - The scheduler selects due jobs and expired leases using DB transactions and row locking (`FOR UPDATE SKIP LOCKED` or equivalent). Prefer bounded batches.
 - Support priority tiers using a RabbitMQ queue priority policy **only after testing**; avoid claiming strict global priority. Delayed jobs live in PostgreSQL until due; do not depend on RabbitMQ delayed-message plugin.
 - Only **predefined, whitelisted job types** may execute (`send_demo_email` via fake sink, `generate_report`, `webhook_demo` to a controlled mock). No arbitrary code/commands or user-supplied destination URLs in MVP.
+- [ADR-007](docs/reference/ADR_LOG.md#adr-007--opt-in-external-delivery-through-an-approved-gateway) permits opt-in Resend and Webhook.site sandbox jobs for the configured tenant administrator. Use only approved fixtures. Use Resend's idempotency window and keep Webhook.site at one attempt.
 - Dashboard Socket.IO events are best effort. On reconnect, fetch REST state to reconcile missed events.
 - Prometheus metric labels must be low-cardinality (job type, outcome, worker group); **never use job IDs, user IDs, or emails as labels**.
 - API secrets in environment/secret store, not repo. Do not expose Postgres/RabbitMQ/Prometheus/Grafana ports publicly on AWS.

@@ -25,6 +25,12 @@ The dispatcher moves a due job to `QUEUED` in the transaction that leases the co
 
 Verify with an integration test that delivers the message before the confirm is recorded, and test redelivery of an earlier envelope after the next retry becomes eligible.
 
+## ADR-007 — Opt-in external delivery through an approved gateway
+
+The original email and webhook job types keep their simulated behavior. Two additive job types let an administrator of one configured tenant submit sandbox jobs. The worker maps approved fixtures to Resend test addresses and a private Webhook.site endpoint. Request payloads use fixture and scenario identifiers.
+
+Resend retains keys for 24 hours. The worker uses a stable job key and payload and stops attempts 23 hours after the job first became eligible. A successful job records provider acceptance. Resend's dashboard shows the eventual delivery, bounce, or complaint. Webhook.site captures requests even when the configured response is unsuccessful. The worker allows one attempt and records an ambiguous result for operator reconciliation. Reconcile external jobs before resuming delivery from a database snapshot, since a snapshot may predate an external effect. External dead letters require reconciliation before any new submission. [Resend keys](https://resend.com/docs/dashboard/emails/idempotency-keys) · [Webhook.site request capture](https://docs.webhook.site/api/requests.html)
+
 ## Future ADR template
 
 ```md

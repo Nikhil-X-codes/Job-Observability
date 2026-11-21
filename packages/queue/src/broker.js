@@ -65,15 +65,19 @@ export async function withQueue(amqpUrl, confirm, operation) {
   }
 }
 
-export function publishDispatch(channel, { id, jobId, attemptNo, priority }) {
+export function publishDispatch(
+  channel,
+  { id, jobId, attemptNo, priority, lockToken },
+) {
   const content = Buffer.from(JSON.stringify({ jobId, attemptNo }));
+  const messageId = lockToken ? `${id}:${lockToken}` : id;
   return new Promise((resolve, reject) => {
     const timer = setTimeout(
       () => finish(new Error("Publish confirmation timed out")),
       2000,
     );
     const returned = (message) => {
-      if (message.properties.messageId === id)
+      if (message.properties.messageId === messageId)
         finish(new Error("Publish was unroutable"));
     };
     const closed = () => finish(new Error("Publisher channel closed"));
@@ -95,7 +99,7 @@ export function publishDispatch(channel, { id, jobId, attemptNo, priority }) {
           persistent: true,
           priority: priorities[priority] ?? priorities.NORMAL,
           contentType: "application/json",
-          messageId: id,
+          messageId,
         },
         finish,
       );

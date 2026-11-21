@@ -23,7 +23,7 @@ DB constraints must ensure `(tenantId, idempotencyKey)` dedupe. Prisma may need 
 
 `PENDING`, `QUEUED`, `RUNNING`, `RETRY_WAIT`, `COMPLETED`, `DEAD`, `CANCELLED`.
 
-Priority values: `LOW`, `NORMAL`, `HIGH` (define comparable numeric mapping). Job types: `GENERATE_REPORT`, `SIMULATE_EMAIL`, `MOCK_WEBHOOK` only. Error categories: `TRANSIENT`, `PERMANENT`, `TIMEOUT`, `LEASE_EXPIRED`, `INTERNAL`.
+Priority values are `LOW`, `NORMAL`, and `HIGH`. The default job types are `GENERATE_REPORT`, `SIMULATE_EMAIL`, and `MOCK_WEBHOOK`. `SEND_EMAIL` and `DELIVER_WEBHOOK` are opt-in administrator operations. Error categories are `TRANSIENT`, `PERMANENT`, `TIMEOUT`, `LEASE_EXPIRED`, and `INTERNAL`.
 
 Dispatch messages contain `{jobId, attemptNo}`, where `attemptNo` starts at 1. Outbox states are `PENDING`, `SENT`, and `SUPERSEDED` for obsolete rows. A pending row may have a temporary dispatch lease.
 
@@ -36,8 +36,12 @@ Cap the complete submission body at 16 KiB of UTF-8 JSON. Require an integer `ma
 | `GENERATE_REPORT` | `{reportId}` | Produce a report summary from fixed demo data |
 | `SIMULATE_EMAIL` | `{templateId, recipientId}` | Record a delivery to a synthetic recipient in the effect ledger |
 | `MOCK_WEBHOOK` | `{eventId}` | Record a mock delivery to the internal demo sink |
+| `SEND_EMAIL` | `{templateId, recipientId}` | Submit one of the approved email fixtures to Resend. `recipientId` is `delivered`, `bounced`, or `complained`. |
+| `DELIVER_WEBHOOK` | `{eventId, destinationId}` | Send a synthetic payload to Webhook.site. `destinationId` is `webhook-site` and `maxAttempts` is 1. |
 
 Identifiers are 1–64 ASCII letters, digits, underscores, or hyphens. Each job uses a stable effect key across attempts. An authorized replay creates a new job with a new effect key and links it to the original. Test fixtures select deterministic delays and outcomes by job and attempt. Public payloads carry no destination URLs, real addresses, or fault controls.
+
+An external job requires an `Idempotency-Key` header and an administrator of the configured delivery tenant. External dead letters require delivery reconciliation before a new submission. [Gateway requirements](AWS_DEPLOYMENT.md#enable-the-external-delivery-gateway)
 
 ## Authentication strategy
 
@@ -50,6 +54,7 @@ Login takes the tenant slug and email because each tenant has its own email name
 | `POST /api/v1/auth/login` | Public | tenant, email, password | 200 user and session cookie |
 | `POST /api/v1/auth/logout` | Signed in | — | 204 |
 | `GET /api/v1/me` | Signed in | — | user + role |
+| `GET /api/v1/job-capabilities` | Signed in | — | `{externalDelivery}` for the signed-in user |
 | `POST /api/v1/jobs` | Signed in | type,payload,priority?,runAt?,maxAttempts?; `Idempotency-Key` | 202 job object |
 | `GET /api/v1/jobs` | Signed in | status?,type?,cursor?,limit? | paginated jobs |
 | `GET /api/v1/jobs/:id` | Owner/admin | — | details + status |
@@ -97,7 +102,7 @@ Use numeric HTTP statuses: invalid request 400/422, oversized body 413, unauthen
 
 ## Socket.IO event contract
 
-Room: `tenant:<authorized-tenant-id>` after server-validated session. Event `job:updated` `{jobId,status,attemptNumber,updatedAt}`; event `queue:summary` `{queued,running,retryWait,dead,completed,at}`. Events do not replace REST; on reconnect refresh lists/details.
+Room: `tenant:<authorized-tenant-id>` after server-validated session. Event `job:updated` `{jobId,status,attemptNumber,updatedAt}`; event `queue:summary` `{queued,running,retryWait,dead,completed,at}`. The dashboard reconciles from REST on Socket.IO reconnect, when the tab becomes visible or the browser goes online, and every 15 seconds while the tab is visible and the browser is online.
 
 Cancellation is a conditional PostgreSQL transition from `PENDING`, `QUEUED`, or `RETRY_WAIT`. A racing worker claim wins if the job has already moved to `RUNNING`. Replay accepts a reason of 1–200 characters, creates one child job for a tenant admin, and returns 409 if that dead letter was replayed already.
 

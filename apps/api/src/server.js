@@ -25,7 +25,13 @@ function start() {
   const db = databaseUrl ? createDatabase(databaseUrl) : undefined;
   const metrics = createMetrics(db);
   const api = db
-    ? createV1Router(db, appOrigin, metrics, writeRateLimit)
+    ? createV1Router(
+        db,
+        appOrigin,
+        metrics,
+        writeRateLimit,
+        config.deliveryTenantId,
+      )
     : undefined;
   const app = createApp(logger, probes.check, api, metrics);
   if (trustProxyHops) app.set("trust proxy", trustProxyHops);

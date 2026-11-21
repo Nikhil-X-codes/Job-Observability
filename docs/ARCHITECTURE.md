@@ -62,8 +62,8 @@ stateDiagram-v2
 1. API validates user and payload, calculates stable request hash and idempotency scope.
 2. A single DB transaction inserts the `PENDING` job and its first outbox row, with `availableAt = runAt` and unique `(tenantId,idempotencyKey)` when the key is provided.
 3. API returns `202 Accepted`, job ID, canonical status. On duplicate key + same payload return original; conflicting payload returns 409.
-4. Dispatcher claims a bounded batch of due outbox rows using `FOR UPDATE SKIP LOCKED`. In the same transaction it sets the outbox lease and moves an eligible job for that attempt to `QUEUED` before exposing the message to RabbitMQ. An expired outbox lease allows another dispatcher to reclaim it.
-5. After commit, the dispatcher publishes the persistent message using confirms and detects unroutable messages. It marks the outbox row `SENT` only after a routed publish is confirmed and its lease token still matches. Publish failure reschedules the outbox row with backoff. A crash after confirm can result in duplicate delivery.
+4. Dispatcher claims a bounded batch of due outbox rows using `FOR UPDATE SKIP LOCKED`. One PostgreSQL statement updates outbox leases, moves eligible jobs to `QUEUED`, and writes the corresponding audit events together before publication. An expired outbox lease allows another dispatcher to reclaim it.
+5. After commit, the dispatcher pipelines confirms within one bounded batch of six persistent messages. Each publication correlates mandatory returns to the current publish lease. The dispatcher marks an outbox row `SENT` only after its own routed publish is confirmed and its lease token still matches. Publish failure reschedules the outbox row with backoff. A crash after confirm can result in duplicate delivery.
 6. If a later dispatch claim finds that the job was cancelled, already claimed for this attempt, or has advanced beyond it, it retires the obsolete outbox row without changing job state. If cancellation races a publish already in progress, the worker verifies state before acknowledging the stale delivery.
 
 ## Worker claim and completion
@@ -109,7 +109,7 @@ When retry cap reached, mark job `DEAD`, add durable `dead_letter` entry and aud
 | Scheduler down | Due retries and expired leases remain in PostgreSQL and are recovered when scanning resumes |
 | Effect succeeds, then a worker loses its lease | The demo effect and result use one fenced transaction. An external sink would need durable idempotency across retries |
 | Socket.IO disconnect | UI re-fetches from REST, no lost authoritative state |
-| Single EC2 dies | Entire stack unavailable; **no HA claim**; recover from volume/backup when host restored |
+| Single EC2 dies | Entire stack is unavailable until recovery. If restoring PostgreSQL with a fresh broker, rearm confirmed dispatches for unclaimed queued jobs before starting services. [Recovery runbook](AWS_DEPLOYMENT.md#recover-when-rebuilding-rabbitmq) |
 
 ## Tradeoffs
 

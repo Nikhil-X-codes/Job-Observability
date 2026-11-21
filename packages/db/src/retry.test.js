@@ -1,6 +1,12 @@
 import { expect, it } from "vitest";
 import { retryDelay } from "./retry.js";
 
+it("does not retry a webhook when a restored job has a larger attempt cap", () => {
+  const lease = { type: "DELIVER_WEBHOOK", attemptNo: 1, maxAttempts: 5 };
+  expect(retryDelay(lease, "LEASE_EXPIRED")).toBeNull();
+  expect(retryDelay(lease, "TIMEOUT")).toBeNull();
+});
+
 it("adds bounded jitter to exponential delays for eligible failures", () => {
   const random = () => 0.8;
   expect(

@@ -1,0 +1,15 @@
+services:
+  api:
+    environment:
+      DELIVERY_TENANT_ID: "${DELIVERY_TENANT_ID:?Set the approved tenant UUID}"
+      DELIVERY_ACCEPT_NEW: "${JOBFLOW_DELIVERY_ACCEPT_NEW:-1}"
+  worker:
+    networks: [backend, delivery]
+    environment:
+      DELIVERY_TENANT_ID: "${DELIVERY_TENANT_ID:?Set the approved tenant UUID}"
+      RESEND_API_KEY: "${RESEND_API_KEY:?Set the Resend sandbox key}"
+      RESEND_FROM: "${RESEND_FROM:-onboarding@resend.dev}"
+      WEBHOOK_SITE_URL: "${WEBHOOK_SITE_URL:?Set the private Webhook.site URL}"
+
+networks:
+  delivery:
